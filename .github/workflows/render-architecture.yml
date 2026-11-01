@@ -8,6 +8,10 @@ on:
       - ".github/workflows/render-architecture.yml"
   workflow_dispatch:
 
+concurrency:
+  group: render-architecture-png
+  cancel-in-progress: true
+
 permissions:
   contents: write
 
@@ -23,7 +27,7 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install SVG renderer
+      - name: Install SVG renderer and Chinese fonts
         run: |
           sudo apt-get update
           sudo apt-get install -y libcairo2 fonts-noto-cjk
@@ -32,25 +36,35 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install cairosvg
 
-      - name: Render SVG to PNG
+      - name: Render SVG to PNG and publish safely
         run: |
-          python - <<'PY'
-          import cairosvg
-          cairosvg.svg2png(
-              url="assets/system-architecture.svg",
-              write_to="assets/system-architecture.png",
-              output_width=1600,
-          )
-          PY
+          set -e
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git reset --hard origin/main
 
-      - name: Commit generated PNG
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add assets/system-architecture.png
-          if git diff --cached --quiet; then
-            echo "PNG 已是最新版本。"
-            exit 0
-          fi
-          git commit -m "build: render engineering architecture diagram PNG"
-          git push origin HEAD:main
+            python - <<'PY'
+            import cairosvg
+            cairosvg.svg2png(
+                url="assets/system-architecture.svg",
+                write_to="assets/system-architecture.png",
+                output_width=1600,
+            )
+            PY
+
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add assets/system-architecture.png
+            if git diff --cached --quiet; then
+              echo "PNG 已是最新版本。"
+              exit 0
+            fi
+
+            git commit -m "build: render engineering architecture diagram PNG"
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo "检测到并发推送，重新同步后重试（第 ${attempt} 次）。"
+          done
+          echo "连续三次无法发布架构图 PNG。"
+          exit 1
