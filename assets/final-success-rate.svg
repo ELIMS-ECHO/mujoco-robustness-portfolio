@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="650" viewBox="0 0 1200 650" role="img" aria-labelledby="title desc">
+  <title id="title">Final success rate under position observation noise</title>
+  <desc id="desc">Measured MuJoCo FetchPickAndPlace-v4 results over 30 paired environment seeds per condition. At 20 millimeter noise, EMA reaches 76.7 percent final success compared with 33.3 percent for the unfiltered policy. EMA is worse at 5 and 10 millimeters.</desc>
+  <rect width="1200" height="650" rx="24" fill="#f4f7fb"/>
+  <text x="56" y="62" fill="#142033" font-family="Inter,Arial,sans-serif" font-size="30" font-weight="700">Final success under noisy position observations</text>
+  <text x="56" y="96" fill="#536278" font-family="Inter,Arial,sans-serif" font-size="17">FetchPickAndPlace-v4 · SAC+HER checkpoint · 30 paired environment seeds per condition</text>
+  <rect x="56" y="122" width="1088" height="92" rx="16" fill="#10233f"/>
+  <text x="84" y="158" fill="#b9c9dc" font-family="Inter,Arial,sans-serif" font-size="15" font-weight="600">20 mm POSITION NOISE · FINAL SUCCESS</text>
+  <text x="84" y="192" fill="#ffffff" font-family="Inter,Arial,sans-serif" font-size="28" font-weight="700">33.3%</text>
+  <text x="205" y="192" fill="#a7b7ca" font-family="Inter,Arial,sans-serif" font-size="18">→</text>
+  <text x="242" y="192" fill="#ffffff" font-family="Inter,Arial,sans-serif" font-size="28" font-weight="700">76.7%</text>
+  <rect x="890" y="143" width="220" height="50" rx="25" fill="#174e47"/>
+  <text x="1000" y="175" text-anchor="middle" fill="#baf4df" font-family="Inter,Arial,sans-serif" font-size="19" font-weight="700">+43.3 percentage points</text>
+  <rect x="56" y="238" width="1088" height="340" rx="18" fill="#ffffff" stroke="#dbe3ed"/>
+  <text x="88" y="278" fill="#1c2b41" font-family="Inter,Arial,sans-serif" font-size="19" font-weight="700">Final-success rate</text>
+  <text x="88" y="302" fill="#65758b" font-family="Inter,Arial,sans-serif" font-size="13">Episode ends while the task is still successful</text>
+  <line x1="160" y1="338" x2="160" y2="500" stroke="#9aa8b9" stroke-width="1.5"/>
+  <line x1="160" y1="500" x2="1055" y2="500" stroke="#9aa8b9" stroke-width="1.5"/>
+  <g fill="#718096" font-family="Inter,Arial,sans-serif" font-size="13" text-anchor="end">
+    <text x="145" y="505">0%</text><text x="145" y="465">25%</text><text x="145" y="424">50%</text><text x="145" y="384">75%</text><text x="145" y="343">100%</text>
+  </g>
+  <g stroke="#e6ebf2" stroke-width="1">
+    <line x1="160" y1="460" x2="1055" y2="460"/><line x1="160" y1="419" x2="1055" y2="419"/><line x1="160" y1="379" x2="1055" y2="379"/><line x1="160" y1="338" x2="1055" y2="338"/>
+  </g>
+  <g fill="#536278" font-family="Inter,Arial,sans-serif" font-size="15" text-anchor="middle">
+    <text x="340" y="530">5 mm</text><text x="610" y="530">10 mm</text><text x="880" y="530">20 mm</text>
+  </g>
+  <text x="607" y="559" fill="#718096" font-family="Inter,Arial,sans-serif" font-size="13" text-anchor="middle">Gaussian position-observation noise σ</text>
+  <polyline points="340,338 610,349 880,446" fill="none" stroke="#2463a6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <polyline points="340,365 610,376 880,376" fill="none" stroke="#d97732" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <g stroke="#2463a6" stroke-width="2.2" fill="#2463a6">
+    <line x1="340" y1="338" x2="340" y2="356"/><line x1="332" y1="338" x2="348" y2="338"/><line x1="332" y1="356" x2="348" y2="356"/>
+    <line x1="610" y1="341" x2="610" y2="372"/><line x1="602" y1="341" x2="618" y2="341"/><line x1="602" y1="372" x2="618" y2="372"/>
+    <line x1="880" y1="417" x2="880" y2="469"/><line x1="872" y1="417" x2="888" y2="417"/><line x1="872" y1="469" x2="888" y2="469"/>
+    <circle cx="340" cy="338" r="7"/><circle cx="610" cy="349" r="7"/><circle cx="880" cy="446" r="7"/>
+  </g>
+  <g stroke="#d97732" stroke-width="2.2" fill="#d97732">
+    <line x1="340" y1="349" x2="340" y2="393"/><line x1="332" y1="349" x2="348" y2="349"/><line x1="332" y1="393" x2="348" y2="393"/>
+    <line x1="610" y1="357" x2="610" y2="405"/><line x1="602" y1="357" x2="618" y2="357"/><line x1="602" y1="405" x2="618" y2="405"/>
+    <line x1="880" y1="357" x2="880" y2="405"/><line x1="872" y1="357" x2="888" y2="357"/><line x1="872" y1="405" x2="888" y2="405"/>
+    <circle cx="340" cy="365" r="7"/><circle cx="610" cy="376" r="7"/><circle cx="880" cy="376" r="7"/>
+  </g>
+  <g font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700">
+    <text x="340" y="326" fill="#2463a6" text-anchor="middle">100.0%</text>
+    <text x="610" y="337" fill="#2463a6" text-anchor="middle">93.3%</text>
+    <text x="880" y="433" fill="#2463a6" text-anchor="middle">33.3%</text>
+    <text x="340" y="389" fill="#b65d20" text-anchor="middle">83.3%</text>
+    <text x="610" y="400" fill="#b65d20" text-anchor="middle">76.7%</text>
+    <text x="880" y="400" fill="#b65d20" text-anchor="middle">76.7%</text>
+  </g>
+  <g font-family="Inter,Arial,sans-serif" font-size="14" fill="#3d4d63">
+    <line x1="870" y1="277" x2="910" y2="277" stroke="#2463a6" stroke-width="4"/><circle cx="890" cy="277" r="5" fill="#2463a6"/><text x="920" y="282">Noisy policy</text>
+    <line x1="1020" y1="277" x2="1060" y2="277" stroke="#d97732" stroke-width="4"/><circle cx="1040" cy="277" r="5" fill="#d97732"/><text x="1070" y="282">EMA</text>
+  </g>
+  <text x="56" y="615" fill="#65758b" font-family="Inter,Arial,sans-serif" font-size="13">Whiskers: 95% Wilson intervals. One fixed third-party checkpoint; simulation only. EMA is not uniformly better.</text>
+</svg>
