@@ -283,7 +283,7 @@ def main() -> None:
         writer.writeheader()
         writer.writerows(records)
     payload = {
-        "status": "measured_on_local_environment",
+        "status": "measured_in_mujoco_simulation",
         "model_sha256": sha256_file(args.model),
         "model_path": str(args.model),
         "hf_compatible_loading": bool(args.hf_compatible),
