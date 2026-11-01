@@ -1,203 +1,195 @@
-# SAC + HER Robotic Manipulation: Robustness to Noisy Position Observations
+# 基于 SAC + HER 的机械臂抓放策略：位置观测噪声鲁棒性评估
 
-**A reproducible MuJoCo evaluation study of how Gaussian position-observation noise and exponential moving-average (EMA) filtering affect a pretrained FetchPickAndPlace policy.**
+**本项目在 MuJoCo 仿真中研究：高斯位置观测噪声与指数移动平均（EMA）滤波，会如何影响预训练 FetchPickAndPlace 机械臂抓放策略的表现。**
 
-[![Portfolio CI](https://github.com/ELIMS-ECHO/mujoco-robustness-portfolio/actions/workflows/tests.yml/badge.svg)](https://github.com/ELIMS-ECHO/mujoco-robustness-portfolio/actions/workflows/tests.yml) [![Demo workflow](https://github.com/ELIMS-ECHO/mujoco-robustness-portfolio/actions/workflows/demo.yml/badge.svg)](https://github.com/ELIMS-ECHO/mujoco-robustness-portfolio/actions/workflows/demo.yml)
+[![自动化测试](https://github.com/ELIMS-ECHO/mujoco-robustness-portfolio/actions/workflows/tests.yml/badge.svg)](https://github.com/ELIMS-ECHO/mujoco-robustness-portfolio/actions/workflows/tests.yml) [![仿真演示工作流](https://github.com/ELIMS-ECHO/mujoco-robustness-portfolio/actions/workflows/demo.yml/badge.svg)](https://github.com/ELIMS-ECHO/mujoco-robustness-portfolio/actions/workflows/demo.yml)
 
-[Experiment report](./EVAL30_REPORT_2026-11-01.md) · [Demo validation](./DEMO_REPORT_2026-11-01.md) · [Resume case study](./RESUME_CASE_STUDY.md) · [Technical notes](./TECHNICAL_NOTES.md)
+[独立评估报告](./EVAL30_REPORT_2026-11-01.md) · [演示核查报告](./DEMO_REPORT_2026-11-01.md) · [求职项目说明](./RESUME_CASE_STUDY.md) · [技术说明](./TECHNICAL_NOTES.md)
 
-> **Scope and ownership.** This project does not train a new SAC+HER policy. It evaluates one third-party pretrained checkpoint and contributes the observation-noise injection, EMA comparison, paired-seed evaluation, diagnostics, plotting, reproducibility workflow and analysis. All results below are MuJoCo simulation results, not real-robot results.
+> **项目范围与成果归属：** 本项目没有重新训练 SAC+HER 策略，而是评估一个第三方预训练模型，并独立实现观测噪声注入、EMA 对照、配对随机种子评估、诊断指标、绘图、复现工作流与统计分析。下文所有结果均来自 MuJoCo 仿真，不代表真实机械臂实验。
 
 ---
 
-## Key result
+## 核心结果
 
-At **20 mm Gaussian position-observation noise**, EMA filtering increased final-success rate from **33.3% (10/30)** to **76.7% (23/30)** on the evaluated checkpoint. At 5 mm and 10 mm, EMA reduced final-success rate by 16.7 percentage points. The result is therefore a **noise-dependent trade-off**, not a universal improvement.
+在 **20 mm 高斯位置观测噪声**下，EMA 滤波将终态成功率从 **33.3%（10/30）提高至 76.7%（23/30）**。但在 5 mm 和 10 mm 条件下，EMA 的终态成功率均下降 16.7 个百分点。因此，结果体现的是**依赖噪声水平的权衡**，而不是 EMA 在所有条件下都更好。
 
-![Measured final-success rate with 95% Wilson intervals](./assets/final-success-rate.svg)
+![不同位置观测噪声下的终态成功率](./assets/final-success-rate.svg)
 
-### Independent evaluation · 30 environment seeds per condition
+### 独立评估：每种条件使用 30 个环境随机种子
 
-| Position-noise σ | Unfiltered policy: ever / final | EMA policy: ever / final |
+| 位置噪声标准差 | 未滤波策略：曾达成目标 / 终态成功 | EMA 策略：曾达成目标 / 终态成功 |
 |---:|---:|---:|
-| 0 mm (clean) | 100.0% / 100.0% | — |
+| 0 mm（无噪声基线） | 100.0% / 100.0% | — |
 | 5 mm | 100.0% / 100.0% | 90.0% / 83.3% |
 | 10 mm | 100.0% / 93.3% | 96.7% / 76.7% |
 | 20 mm | 80.0% / 33.3% | 86.7% / 76.7% |
 
-- **210 episodes** in the independent evaluation: 7 conditions × 30 environment seeds (10000–10029).
-- **245 episodes total** across the 35-episode pilot and the independent 210-episode evaluation. The pilot and main evaluation use different seed ranges.
-- **Final success** means the task is successful at the final step. **Ever success** means the task reached the success condition at least once during the episode. They are not interchangeable.
-- At 20 mm, paired outcomes were: EMA-only success 14, unfiltered-only success 1, both success 9, both failure 6. Exploratory exact two-sided McNemar p = 0.0009766; no multiplicity correction was applied.
-- Wilson intervals are wide enough to matter. For example, the 23/30 EMA result at 20 mm has a 95% Wilson interval of approximately 59.1%–88.2%.
+- 独立评估共 **210 回合**：7 组条件 × 每组 30 个环境随机种子（10000–10029）。
+- 预实验 35 回合与独立评估 210 回合合计 **245 回合**。两阶段使用不同的随机种子范围。
+- **曾达成目标**：回合过程中至少有一步达到成功条件。**终态成功**：回合最后一步仍满足成功条件。两者不能互相替代。
+- 在 20 mm 条件下，配对结果为：仅 EMA 成功 14 对、仅未滤波策略成功 1 对、双方均成功 9 对、双方均失败 6 对。探索性双侧精确 McNemar 检验 p = 0.0009766；未进行多重比较校正。
+- Wilson 置信区间仍然较宽。例如，20 mm 条件下 EMA 的 23/30 终态成功率，其 95% Wilson 区间约为 59.1%–88.2%。
 
-**Interpretation:** EMA may suppress larger measurement fluctuations, but its lag may hurt control at lower noise levels. The lag explanation is a hypothesis, not yet a verified causal mechanism.
+**结果解释：** EMA 可能抑制较大的测量波动，但滤波滞后也可能损害低噪声条件下的控制表现。关于“滞后导致性能下降”的解释目前仍是假设，尚未通过轨迹分析确认因果机制。
 
-## What was built
+## 本项目实现了什么
 
-1. **Observation perturbation.** Inject independent Gaussian noise into gripper and object XYZ observations.
-2. **Goal consistency.** Recompute relative position and update `achieved_goal` from the perturbed object position, avoiding a clean-state information leak. Keep `desired_goal` unchanged.
-3. **Filtering baseline.** Compare the unfiltered observation against EMA-filtered observations using the same fixed policy and matched initial environment seeds.
-4. **Evaluation contract.** Record both ever-success and final-success, first-success step, episode return and diagnostic distances.
-5. **Reproducible evidence.** Pin the model revision and SHA-256, pin runtime dependencies, run tests and evaluation in GitHub Actions, and export CSV, JSON and figures.
-6. **Paired analysis.** Compare binary outcomes on matched initial seeds and calculate an exploratory exact McNemar test.
+1. **观测扰动：** 分别对夹爪末端与物块的 XYZ 位置观测注入独立高斯噪声。
+2. **目标字段一致性：** 根据受扰动后的物块位置重新计算相对位置，并同步更新 achieved_goal，避免目标条件策略通过未受扰动的坐标获得信息。desired_goal 保持不变。
+3. **滤波对照：** 使用同一个固定策略、相同初始环境随机种子，对比未滤波观测与 EMA 滤波观测。
+4. **评估指标：** 同时记录曾达成目标、终态成功、首次成功步数、回合回报和诊断距离。
+5. **可复现证据：** 固定模型版本和 SHA-256，固定运行依赖，通过 GitHub Actions 执行测试与评估，并导出 CSV、JSON 和图表。
+6. **配对分析：** 对相同初始环境随机种子的二元结果进行比较，并计算探索性精确 McNemar 检验。
 
-## Experiment flow
+## 实验流程
 
-```mermaid
+~~~mermaid
 flowchart LR
-    A[FetchPickAndPlace-v4] --> B[Observation]
-    B --> C[Clean baseline]
-    B --> D[Gaussian XYZ noise]
-    D --> E[Unfiltered input]
-    D --> F[EMA filter]
-    C --> G[Same pretrained SAC+HER policy]
+    A[FetchPickAndPlace-v4 环境] --> B[位置观测]
+    B --> C[无噪声基线]
+    B --> D[注入 XYZ 高斯噪声]
+    D --> E[未滤波输入]
+    D --> F[EMA 滤波]
+    C --> G[同一个 SAC+HER 预训练策略]
     E --> G
     F --> G
-    G --> H[MuJoCo action and next state]
-    H --> I[Episode metrics]
-    I --> J[CSV / JSON / confidence intervals]
-```
+    G --> H[MuJoCo 执行动作并更新状态]
+    H --> I[回合指标]
+    I --> J[CSV、JSON 与置信区间]
+~~~
 
-## Demo
+## 仿真演示
 
-A cloud-rendered, side-by-side MuJoCo GIF was generated for one deliberately selected contrast case: seed 10001 at 20 mm noise. The unfiltered episode ended unsuccessfully; the EMA episode reached success at step 37 and ended successfully.
+我们为一个事先选定的对照案例生成了左右并排的 MuJoCo 仿真 GIF：随机种子 10001、位置噪声 20 mm。未滤波策略最终失败；EMA 策略在第 37 步首次成功，并在回合结束时仍然成功。
 
-- [Demo outcome and rendering-fidelity report](./DEMO_REPORT_2026-11-01.md)
-![Side-by-side MuJoCo demo: noisy policy vs. EMA](./assets/demo.gif)
+- [演示结果与渲染一致性核查报告](./DEMO_REPORT_2026-11-01.md)
 
-- [Download the selected-seed GIF](./assets/demo.gif) · [Demo manifest](./assets/demo.json) · [Demo validation report](./DEMO_REPORT_2026-11-01.md)
-- The selected GIF is a **single illustrative case**, not a representative sample. Overall performance must be judged from the 210-episode evaluation above.
-- The GIF is generated by the public repository's [demo workflow](./.github/workflows/demo.yml); it is not a real-robot recording.
+![同一随机种子下未滤波策略与 EMA 策略的 MuJoCo 仿真对比](./assets/demo.gif)
 
-The standalone HTML dashboard source is [`index.html`](./index.html). Download it and open it locally in a browser; a public GitHub Pages deployment has not yet been configured.
+- [查看 GIF](./assets/demo.gif) · [演示数据清单](./assets/demo.json) · [模型来源记录](./assets/model_provenance.json)
+- 该 GIF 是**单个经过挑选的说明性案例**，不是随机抽样，也不代表总体成功率。总体表现应以以上 210 回合独立评估为准。
+- GIF 由公开仓库中的[仿真演示工作流](./.github/workflows/demo.yml)生成；它不是实体机械臂录像。
 
-## Public raw evidence
+独立 HTML 仪表盘源码位于 [index.html](./index.html)。目前可以下载后在浏览器本地打开；尚未配置 GitHub Pages 公网部署。
 
-The exact per-episode records and aggregate JSON used for the 30-seed report are committed in this repository:
+## 公开实验原始证据
 
-- [`evidence/summary.csv`](./evidence/summary.csv) — compact, GitHub-previewable seven-condition summary.
-- [`evidence/episodes.csv.gz`](./evidence/episodes.csv.gz) — all 210 original measured episodes, gzip-compressed; see [`evidence/README.md`](./evidence/README.md) to reconstruct the CSV.
-- [`evidence/summary.json`](./evidence/summary.json) — seven condition-level summaries and confidence intervals.
-- [`evidence/model_provenance.json`](./evidence/model_provenance.json) — upstream checkpoint revision and SHA-256.
-- [`evidence/README.md`](./evidence/README.md) — evidence origin, definitions and integrity notes.
+本仓库归档了 30 个随机种子评估所使用的逐回合记录与汇总数据：
 
-The public [Actions page](https://github.com/ELIMS-ECHO/mujoco-robustness-portfolio/actions) contains CI and reproducibility runs. Use [`.github/workflows/evaluate.yml`](./.github/workflows/evaluate.yml) to manually rerun the 30-seed evaluation; it takes substantially longer than the unit-test workflow.
+- [evidence/summary.csv](./evidence/summary.csv)：七组条件的精简汇总，可直接在 GitHub 中预览。
+- [evidence/episodes.csv.gz](./evidence/episodes.csv.gz)：210 回合原始记录的 gzip 压缩文件。解压方法见[证据说明](./evidence/README.md)。
+- [evidence/summary.json](./evidence/summary.json)：七组条件的完整汇总与置信区间。
+- [evidence/model_provenance.json](./evidence/model_provenance.json)：上游模型版本与权重 SHA-256。
+- [evidence/README.md](./evidence/README.md)：证据来源、字段说明与完整性校验方法。
 
-## My contribution vs. upstream work
+公开的[自动化工作流页面](https://github.com/ELIMS-ECHO/mujoco-robustness-portfolio/actions)包含持续集成测试和复现任务。需要重新运行完整 30 种子评估时，使用 [evaluate.yml](./.github/workflows/evaluate.yml) 手动触发；这项任务比单元测试耗时得多。
 
-| Component | Attribution |
+## 个人贡献与上游成果边界
+
+| 项目组成 | 成果归属 |
 |---|---|
-| SAC + HER policy training and checkpoint | Third-party model by [hhmm1122](https://huggingface.co/hhmm1122/fetch-pickandplace-sac-her); not my training result |
-| Noise injection and goal-consistent observation transformation | Implemented in this project |
-| EMA filtering and matched-seed evaluation | Implemented in this project |
-| Episode metrics, CSV/JSON output, confidence intervals and paired analysis | Implemented in this project |
-| Plotting, regression tests, Windows runner and GitHub Actions workflows | Implemented in this project |
-| Real-robot deployment or sim-to-real transfer | Not completed |
+| SAC + HER 策略训练与模型权重 | [hhmm1122](https://huggingface.co/hhmm1122/fetch-pickandplace-sac-her) 提供的第三方模型，不是我的训练成果 |
+| 观测噪声注入与目标字段一致性处理 | 本项目独立实现 |
+| EMA 滤波与相同随机种子对照评估 | 本项目独立实现 |
+| 回合指标、CSV/JSON 输出、置信区间与配对分析 | 本项目独立实现 |
+| 绘图、回归测试、Windows 运行脚本与 GitHub Actions 工作流 | 本项目独立实现 |
+| 真实机械臂部署或仿真到现实迁移 | 尚未完成 |
 
-## Reproduce
+## 复现方法
 
-### Requirements
+### 环境要求
 
 - Python 3.11
 - MuJoCo 3.3.7
-- Gymnasium 1.2.3 and Gymnasium-Robotics 1.4.2
+- Gymnasium 1.2.3 与 Gymnasium-Robotics 1.4.2
 - Stable-Baselines3 2.8.0
-- PyTorch CPU build
+- CPU 版本 PyTorch
 - NumPy 2.3.5
 
 ### Windows / PowerShell
 
-From the project directory:
+在项目目录中执行：
 
-```powershell
+~~~powershell
 conda create -n mujoco-portfolio python=3.11 -y
 conda activate mujoco-portfolio
 
-# Install the pinned dependencies and run a small smoke test
+# 安装固定版本依赖，并先运行小规模冒烟测试
 .\RUN_WINDOWS.ps1 -InstallDependencies -Episodes 5
 
-# Expand only after the smoke test passes
+# 冒烟测试通过后，再扩大评估规模
 .\RUN_WINDOWS.ps1 -Episodes 100
-```
+~~~
 
-The script downloads the checkpoint from Hugging Face at the explicitly pinned revision `c817f4a3033fb4bde985bfcfe93ed5d8b949b04b` and records its SHA-256. It does not train or overwrite the upstream model. Windows rendering and local execution have **not yet been independently verified**; the 245 measured episodes were run on GitHub's Linux runner.
+脚本会从 Hugging Face 下载固定版本的第三方模型，并记录 SHA-256。它不会训练模型，也不会覆盖上游模型。Windows 本机渲染和运行尚未完成独立验收；已统计的 245 回合实验均在 GitHub Linux 运行器上执行。
 
-### Main evaluation settings
+### 正式评估设置
 
-| Setting | Value |
+| 设置项 | 取值 |
 |---|---|
-| Environment | FetchPickAndPlace-v4 |
-| Policy | One fixed external SAC+HER checkpoint |
-| Action prediction | Deterministic |
-| Maximum episode length | 50 steps |
-| Noise | Independent Gaussian perturbation of gripper and object XYZ |
-| Noise standard deviations | 5, 10 and 20 mm |
-| EMA coefficient | α = 0.35 (fixed; not tuned on the evaluation seeds) |
-| Main evaluation seeds | 10000–10029 |
-| Conditions | clean + noisy/EMA at 5, 10 and 20 mm |
+| 仿真环境 | FetchPickAndPlace-v4 |
+| 策略 | 一个固定的第三方 SAC+HER 预训练模型 |
+| 动作预测 | 确定性预测 |
+| 单回合最大步数 | 50 |
+| 噪声类型 | 分别作用于夹爪与物块 XYZ 位置的独立高斯扰动 |
+| 噪声标准差 | 5、10、20 mm |
+| EMA 系数 | α = 0.35（固定，未使用正式评估种子调参） |
+| 正式评估随机种子 | 10000–10029 |
+| 条件 | 无噪声基线 + 5、10、20 mm 下的未滤波与 EMA 条件 |
 
-## Repository map
+## 仓库结构
 
-```text
-mujoco-robustness/
-├── README.md
-├── index.html
-├── requirements.txt
+~~~text
+mujoco-robustness-portfolio/
+├── README.md                  # 项目主页、成果归属与复现步骤
+├── index.html                 # 响应式作品集网页与实验仪表盘
+├── requirements.txt           # Python 依赖版本
 ├── assets/
-│   ├── final-success-rate.svg
-│   ├── demo.gif                 # generated by the public demo workflow
-│   ├── demo.json
-│   └── model_provenance.json
+│   ├── final-success-rate.svg # 终态成功率图
+│   ├── demo.gif               # 仿真演示动图
+│   ├── demo.json              # 演示案例数据
+│   └── model_provenance.json  # 演示所用模型来源
 ├── evidence/
-│   ├── episodes.csv.gz
-│   ├── summary.csv
-│   ├── summary.json
-│   └── model_provenance.json
+│   ├── episodes.csv.gz        # 210 回合原始记录
+│   ├── summary.csv            # 精简实验汇总
+│   ├── summary.json           # 完整实验汇总
+│   └── model_provenance.json  # 实验模型来源
 ├── .github/workflows/
-│   ├── tests.yml
-│   ├── demo.yml
-│   └── evaluate.yml
-├── evaluate_robustness.py
-├── analyze_paired.py
-├── plot_results.py
-├── record_demo.py
-├── download_checkpoint.py
-├── RUN_WINDOWS.ps1
-├── tests/
-├── EVAL30_REPORT_2026-11-01.md
-├── PILOT_REPORT_2026-11-01.md
-├── DEMO_REPORT_2026-11-01.md
-├── RESUME_CASE_STUDY.md
-├── RESULTS_TEMPLATE.md
-└── TECHNICAL_NOTES.md
-```
+│   ├── tests.yml              # 自动化测试
+│   ├── demo.yml               # 仿真演示生成
+│   └── evaluate.yml           # 完整评估复现
+├── evaluate_robustness.py     # 位置扰动、EMA、评估与统计
+├── analyze_paired.py          # 配对随机种子与探索性统计
+├── plot_results.py            # 根据真实汇总数据生成图表
+├── record_demo.py             # 使用独立渲染环境录制演示
+├── download_checkpoint.py     # 下载模型并核验 SHA-256
+├── RUN_WINDOWS.ps1            # Windows 一键运行脚本
+├── tests/                     # 自动化测试
+├── EVAL30_REPORT_2026-11-01.md # 210 回合独立评估报告
+├── PILOT_REPORT_2026-11-01.md  # 35 回合预实验报告
+├── DEMO_REPORT_2026-11-01.md   # 仿真演示与一致性核查
+├── RESUME_CASE_STUDY.md        # 求职项目说明
+├── RESULTS_TEMPLATE.md         # 后续跨模型验证模板
+└── TECHNICAL_NOTES.md          # 技术说明与项目记录
+~~~
 
-## Limitations
+## 研究限制
 
-- Only one fixed third-party checkpoint was evaluated. Results do not establish cross-checkpoint or cross-training-seed generalization.
-- Noise is idealized independent Gaussian XYZ measurement noise. Sensor bias, temporal correlation, delay, drift, camera/image noise and actuator disturbances are outside this experiment.
-- EMA's lag is a plausible explanation for its low-noise degradation, but has not yet been causally isolated.
-- Failure buckets are heuristic diagnostics, not validated physical grasp-stage labels.
-- The experiment is simulation-only. No physical robot, real sensor or sim-to-real transfer was tested.
-- The 30-seed evaluation is an engineering study, not a broad statistical guarantee. The paired p-value is exploratory and unadjusted for multiple comparisons.
+- 目前只评估了一个固定的第三方预训练模型，不能据此推断跨模型或跨训练随机种子的泛化能力。
+- 噪声采用理想化、相互独立的高斯 XYZ 位置误差。传感器偏置、时间相关误差、延迟、漂移、相机图像噪声和执行器扰动均不在本次实验范围内。
+- EMA 滞后是解释低噪声条件下性能下降的一个合理假设，但尚未通过独立轨迹分析验证因果关系。
+- 失败分类属于启发式诊断，不是经过验证的物理抓取阶段标签。
+- 本项目仅完成仿真实验，没有测试实体机器人、真实传感器或仿真到现实迁移。
+- 30 个随机种子的评估属于工程实验，不构成广泛统计保证。配对检验为探索性分析，未进行多重比较校正。
 
-## Model provenance and licensing
+## 模型来源与许可
 
-The evaluated checkpoint is from [`hhmm1122/fetch-pickandplace-sac-her`](https://huggingface.co/hhmm1122/fetch-pickandplace-sac-her).
+本项目评估的模型来自 [hhmm1122/fetch-pickandplace-sac-her](https://huggingface.co/hhmm1122/fetch-pickandplace-sac-her)。
 
-- Revision: `c817f4a3033fb4bde985bfcfe93ed5d8b949b04b`
-- SHA-256: `1aad52960bc0b7baaa5249f3aa1a2de09009c300dd2b0bf61c9c51d7467b017b`
-- The model card does not clearly state a license. The checkpoint is not redistributed in this repository. Verify upstream terms before reuse.
-- The environment is [Gymnasium-Robotics FetchPickAndPlace](https://robotics.farama.org/envs/fetch/pick_and_place/).
+- 固定版本标识：c817f4a3033fb4bde985bfcfe93ed5d8b949b04b
+- 权重 SHA-256：1aad52960bc0b7baaa5249f3aa1a2de09009c300dd2b0bf61c9c51d7467b017b
+- 上游模型卡没有明确标注许可证。本仓库不重新分发模型权重；再次使用前应核实上游授权条款。
+- 仿真环境为 [Gymnasium-Robotics FetchPickAndPlace](https://robotics.farama.org/envs/fetch/pick_and_place/)。
 
----
-
-## 中文摘要
-
-本项目基于第三方 SAC+HER 预训练策略，在 MuJoCo 的 FetchPickAndPlace-v4 环境中，研究 XYZ 位置观测噪声及 EMA 滤波对机械臂抓放表现的影响。
-
-独立测试使用 30 个环境随机种子、7 组条件，共 210 回合。20 mm 噪声下，EMA 将终态成功率从 33.3% 提高到 76.7%；但在 5 mm 和 10 mm 条件下，EMA 的终态成功率均下降 16.7 个百分点。结论是滤波效果依赖噪声水平，不能宣称 EMA 全面优于原策略。
-
-个人贡献集中在观测扰动、目标字段一致性处理、EMA 对照、批量评估、配对统计、结果可视化和复现工程。**SAC+HER 模型训练属于第三方工作；本项目没有完成真实机械臂部署。**
-
+**核心结论：** 在当前固定模型与仿真条件下，EMA 在 20 mm 高噪声条件下表现更好，但在 5 mm 和 10 mm 条件下表现更差。项目贡献是实验设计、观测处理、评估分析和复现工程，不是第三方策略训练，也不是实体机器人部署。
