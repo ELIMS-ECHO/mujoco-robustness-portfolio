@@ -33,9 +33,12 @@ TRACE_FIELDS = [
     "object_noisy_x_m", "object_noisy_y_m", "object_noisy_z_m",
     "gripper_policy_x_m", "gripper_policy_y_m", "gripper_policy_z_m",
     "object_policy_x_m", "object_policy_y_m", "object_policy_z_m",
-    "gripper_raw_error_m", "object_raw_error_m",
-    "gripper_policy_error_m", "object_policy_error_m",
-    "gripper_lag_projection_m", "object_lag_projection_m",
+    "relative_true_x_m", "relative_true_y_m", "relative_true_z_m",
+    "relative_noisy_x_m", "relative_noisy_y_m", "relative_noisy_z_m",
+    "relative_policy_x_m", "relative_policy_y_m", "relative_policy_z_m",
+    "gripper_raw_error_m", "object_raw_error_m", "relative_raw_error_m",
+    "gripper_policy_error_m", "object_policy_error_m", "relative_policy_error_m",
+    "gripper_lag_projection_m", "object_lag_projection_m", "relative_lag_projection_m",
     "action_dx", "action_dy", "action_dz", "action_gripper",
     "post_gripper_x_m", "post_gripper_y_m", "post_gripper_z_m",
     "post_object_x_m", "post_object_y_m", "post_object_z_m",
@@ -48,8 +51,11 @@ EPISODE_METRICS = [
     "gripper_policy_rmse_m",
     "object_raw_rmse_m",
     "object_policy_rmse_m",
+    "relative_raw_rmse_m",
+    "relative_policy_rmse_m",
     "gripper_lag_projection_mean_m",
     "object_lag_projection_mean_m",
+    "relative_lag_projection_mean_m",
     "mean_object_goal_distance_m",
     "final_object_goal_distance_m",
 ]
@@ -130,12 +136,21 @@ def run_diagnostics(model, env, episode_count: int, seed_start: int,
         previous = previous_positions.get((method, sigma, seed))
         previous_gripper = None if previous is None else previous[0]
         previous_object = None if previous is None else previous[1]
+        previous_relative = (
+            None if previous is None else previous[1] - previous[0]
+        )
+        relative_true = true_pre[3:6] - true_pre[0:3]
+        relative_noisy = noisy_pre[3:6] - noisy_pre[0:3]
+        relative_policy = policy_pre[3:6] - policy_pre[0:3]
 
         gripper_lag = directional_lag_projection(
             true_pre[0:3], policy_pre[0:3], previous_gripper
         )
         object_lag = directional_lag_projection(
             true_pre[3:6], policy_pre[3:6], previous_object
+        )
+        relative_lag = directional_lag_projection(
+            relative_true, relative_policy, previous_relative
         )
 
         action = np.asarray(event["action"])
@@ -164,12 +179,18 @@ def run_diagnostics(model, env, episode_count: int, seed_start: int,
             **_position_fields("object_noisy", noisy_pre[3:6]),
             **_position_fields("gripper_policy", policy_pre[0:3]),
             **_position_fields("object_policy", policy_pre[3:6]),
+            **_position_fields("relative_true", relative_true),
+            **_position_fields("relative_noisy", relative_noisy),
+            **_position_fields("relative_policy", relative_policy),
             "gripper_raw_error_m": float(np.linalg.norm(noisy_pre[0:3] - true_pre[0:3])),
             "object_raw_error_m": float(np.linalg.norm(noisy_pre[3:6] - true_pre[3:6])),
+            "relative_raw_error_m": float(np.linalg.norm(relative_noisy - relative_true)),
             "gripper_policy_error_m": float(np.linalg.norm(policy_pre[0:3] - true_pre[0:3])),
             "object_policy_error_m": float(np.linalg.norm(policy_pre[3:6] - true_pre[3:6])),
+            "relative_policy_error_m": float(np.linalg.norm(relative_policy - relative_true)),
             "gripper_lag_projection_m": "" if gripper_lag is None else gripper_lag,
             "object_lag_projection_m": "" if object_lag is None else object_lag,
+            "relative_lag_projection_m": "" if relative_lag is None else relative_lag,
             "action_dx": float(action_flat[0]),
             "action_dy": float(action_flat[1]),
             "action_dz": float(action_flat[2]),
@@ -215,6 +236,12 @@ def run_diagnostics(model, env, episode_count: int, seed_start: int,
             float(row["object_lag_projection_m"])
             for row in rows if row["object_lag_projection_m"] != ""
         ]
+        relative_raw = [float(row["relative_raw_error_m"]) for row in rows]
+        relative_policy = [float(row["relative_policy_error_m"]) for row in rows]
+        relative_lag = [
+            float(row["relative_lag_projection_m"])
+            for row in rows if row["relative_lag_projection_m"] != ""
+        ]
         goal_distances = [float(row["object_goal_distance_m"]) for row in rows]
         episode_rows.append({
             **record,
@@ -222,8 +249,11 @@ def run_diagnostics(model, env, episode_count: int, seed_start: int,
             "gripper_policy_rmse_m": _rms(gripper_policy),
             "object_raw_rmse_m": _rms(object_raw),
             "object_policy_rmse_m": _rms(object_policy),
+            "relative_raw_rmse_m": _rms(relative_raw),
+            "relative_policy_rmse_m": _rms(relative_policy),
             "gripper_lag_projection_mean_m": _mean_or_none(gripper_lag),
             "object_lag_projection_mean_m": _mean_or_none(object_lag),
+            "relative_lag_projection_mean_m": _mean_or_none(relative_lag),
             "mean_object_goal_distance_m": _mean_or_none(goal_distances),
             "final_object_goal_distance_m": goal_distances[-1] if goal_distances else None,
         })
@@ -310,25 +340,48 @@ def write_report(path: Path, payload: dict) -> None:
         f"- EMA 系数：{payload['alpha']}",
         f"- 最大步数：{payload['max_steps']}",
         "",
-        "## 逐条件诊断指标",
+        "## 观测误差：原始测量与策略实际输入",
         "",
-        "| 方法 | 噪声 σ (mm) | 终态成功率 | 夹爪原始观测 RMSE (m) | 夹爪策略输入 RMSE (m) | 物块原始观测 RMSE (m) | 物块策略输入 RMSE (m) | 夹爪方向滞后投影 (m) | 物块方向滞后投影 (m) |",
-        "|---|---:|---:|---:|---:|---:|---:|---:|---:|",
+        "| 方法 | σ (mm) | 夹爪原始 RMSE (mm) | 夹爪输入 RMSE (mm) | 物块原始 RMSE (mm) | 物块输入 RMSE (mm) | 相对位置原始 RMSE (mm) | 相对位置输入 RMSE (mm) |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for row in payload["summary"]:
         values = [
             row["method"],
             f"{row['sigma_m'] * 1000:.0f}",
-            f"{row['final_success_rate']:.1%}",
             row["gripper_raw_rmse_m_mean"],
             row["gripper_policy_rmse_m_mean"],
             row["object_raw_rmse_m_mean"],
             row["object_policy_rmse_m_mean"],
+            row["relative_raw_rmse_m_mean"],
+            row["relative_policy_rmse_m_mean"],
+        ]
+        formatted = [str(values[0]), str(values[1])]
+        formatted.extend("—" if value is None else f"{value * 1000:.2f}" for value in values[2:])
+        lines.append("| " + " | ".join(formatted) + " |")
+
+    lines.extend([
+        "",
+        "## 闭环任务表现与方向滞后诊断",
+        "",
+        "| 方法 | σ (mm) | 终态成功率 | 夹爪方向滞后投影 (mm) | 物块方向滞后投影 (mm) | 相对位置方向滞后投影 (mm) | 平均物块-目标距离 (m) | 动作差异 L2（相对未滤波） |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|",
+    ])
+    for row in payload["summary"]:
+        values = [
+            row["method"],
+            f"{row['sigma_m'] * 1000:.0f}",
+            f"{row['final_success_rate']:.1%}",
             row["gripper_lag_projection_mean_m_mean"],
             row["object_lag_projection_mean_m_mean"],
+            row["relative_lag_projection_mean_m_mean"],
+            row["mean_object_goal_distance_m_mean"],
+            row["mean_action_l2_difference_vs_noisy"],
         ]
         formatted = [str(values[0]), str(values[1]), str(values[2])]
-        formatted.extend("—" if value is None else f"{value:.4f}" for value in values[3:])
+        formatted.extend("—" if value is None else f"{value * 1000:.2f}" for value in values[3:6])
+        formatted.append("—" if values[6] is None else f"{values[6]:.4f}")
+        formatted.append("—" if values[7] is None else f"{values[7]:.4f}")
         lines.append("| " + " | ".join(formatted) + " |")
 
     lines.extend([
@@ -336,47 +389,46 @@ def write_report(path: Path, payload: dict) -> None:
         "## 解释边界",
         "",
         "- 这是轨迹机制诊断，不是新的独立测试集。它使用与主评估相同的环境随机种子范围，目的是解释逐步行为，不替代 210 回合总体评估。",
-        "- 仅对策略输入中的夹爪与物块 XYZ 位置加入高斯噪声；速度等其他观测字段仍来自仿真环境，未加入噪声。",
+        "- 仅对策略输入中的夹爪与物块 XYZ 位置加入独立高斯噪声；速度等其他观测字段仍来自仿真环境，未加入噪声。",
+        "- 相对位置定义为物块位置减去夹爪位置；策略输入中的相对位置由滤波后的两个位置重新计算。",
         "- 策略输入 RMSE 是策略实际接收到的位置与当前仿真真实位置之差，包含测量噪声与滤波动态效应。",
-        "- 方向滞后投影是估计误差沿最近真实运动方向的投影。正值表示估计位置落后于真实运动方向；它是诊断指标，不是精确时间延迟。",
+        "- 方向滞后投影是估计误差沿最近真实位移方向的投影。正值表示估计位置落后于真实运动方向；它是诊断指标，不是精确时间延迟。",
         "- 未滤波与 EMA 的闭环动作不同，之后的真实轨迹也会不同。因此轨迹差异包含策略反馈后的状态变化，不能只归因于滤波器单一因素。",
-        "- 只有当逐步误差、方向滞后、动作变化和任务轨迹共同支持时，才提出机制解释；不把相关性写成因果证明。",
+        "- 只有当观测误差、相对位置误差、方向滞后、动作变化和任务轨迹共同支持时，才提出机制解释；不把相关性写成因果证明。",
         "",
         "## 生成文件",
         "",
         "- trajectory_steps.csv.gz：每个仿真步的真实位置、噪声位置、策略输入、动作和任务状态。",
         "- episode_summary.csv：每个回合的成功结果与轨迹误差汇总。",
         "- diagnostics_summary.json：机器可读的逐条件汇总与逐步曲线。",
-        "- position_error_comparison.png：位置观测误差对比。",
+        "- position_error_comparison.png：夹爪、物块与相对位置误差对比。",
         "- goal_distance_20mm.png：20 mm 条件下实际物块到目标距离的逐步轨迹。",
         "",
     ])
     path.write_text("\n".join(lines), encoding="utf-8")
-
 
 def create_plots(output_dir: Path, summaries: list[dict], step_curves: list[dict]) -> None:
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    fig, axes = plt.subplots(1, 2, figsize=(12, 4.8), constrained_layout=True)
-    for method, label, metric, axis in (
-        ("noisy", "未滤波", "gripper_policy_rmse_m", axes[0]),
-        ("ema", "EMA", "gripper_policy_rmse_m", axes[0]),
-        ("noisy", "未滤波", "object_policy_rmse_m", axes[1]),
-        ("ema", "EMA", "object_policy_rmse_m", axes[1]),
-    ):
-        rows = [r for r in summaries if r["method"] == method]
-        rows.sort(key=lambda r: r["sigma_m"])
-        x = [r["sigma_m"] * 1000 for r in rows]
-        y = [r[f"{metric}_mean"] * 1000 for r in rows]
-        sd = [r[f"{metric}_sd"] * 1000 for r in rows]
-        axis.errorbar(x, y, yerr=sd, marker="o", capsize=3, label=label)
-    axes[0].set_title("夹爪位置估计误差")
-    axes[1].set_title("物块位置估计误差")
-    for axis in axes:
+    fig, axes = plt.subplots(1, 3, figsize=(16, 4.8), constrained_layout=True)
+    metrics = [
+        ("gripper_policy_rmse_m", "夹爪位置估计误差"),
+        ("object_policy_rmse_m", "物块位置估计误差"),
+        ("relative_policy_rmse_m", "夹爪-物块相对位置误差"),
+    ]
+    for axis, (metric, title) in zip(axes, metrics):
+        for method, label in (("noisy", "未滤波"), ("ema", "EMA")):
+            rows = [r for r in summaries if r["method"] == method]
+            rows.sort(key=lambda r: r["sigma_m"])
+            x = [r["sigma_m"] * 1000 for r in rows]
+            y = [r[f"{metric}_mean"] * 1000 for r in rows]
+            sd = [r[f"{metric}_sd"] * 1000 for r in rows]
+            axis.errorbar(x, y, yerr=sd, marker="o", capsize=3, label=label)
+        axis.set_title(title)
         axis.set_xlabel("位置观测噪声标准差 σ（mm）")
-        axis.set_ylabel("每回合位置 RMSE 均值 ± SD（mm）")
+        axis.set_ylabel("每回合 RMSE 均值 ± SD（mm）")
         axis.grid(alpha=0.25)
         axis.legend()
     fig.savefig(output_dir / "position_error_comparison.png", dpi=170)
@@ -405,7 +457,6 @@ def create_plots(output_dir: Path, summaries: list[dict], step_curves: list[dict
     ax.legend()
     fig.savefig(output_dir / "goal_distance_20mm.png", dpi=170)
     plt.close(fig)
-
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -473,6 +524,7 @@ def main() -> None:
         "conditions": len(summaries),
         "trajectory_rows": len(trace_rows),
         "noise_scope": "独立高斯噪声仅注入夹爪与物块 XYZ 位置；速度等其他观测字段保持仿真环境原值",
+        "relative_position_definition": "物块 XYZ 位置减去夹爪 XYZ 位置；由策略实际接收的两个位置重新计算",
         "lag_metric": "真实位置减策略输入位置，沿最近真实位移方向投影；正值表示估计位置落后于运动方向",
         "evaluation_loop": "复用 evaluate_robustness.evaluate 的同一环境推进循环；轨迹回调只读状态副本，动作原始 dtype 不变",
         "summary": summaries,
