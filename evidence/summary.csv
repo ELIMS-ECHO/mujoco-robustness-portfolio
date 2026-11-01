@@ -1,0 +1,8 @@
+method,noise_sigma_mm,episodes,ever_success_count,ever_success_rate,final_success_count,final_success_rate,final_success_wilson_95_low,final_success_wilson_95_high
+clean,0,30,30,1.000,30,1.000,0.8865,1.0000
+noisy,5,30,30,1.000,30,1.000,0.8865,1.0000
+ema,5,30,27,0.900,25,0.833,0.6644,0.9266
+noisy,10,30,30,1.000,28,0.933,0.7868,0.9815
+ema,10,30,29,0.967,23,0.767,0.5907,0.8821
+noisy,20,30,24,0.800,10,0.333,0.1923,0.5122
+ema,20,30,26,0.867,23,0.767,0.5907,0.8821
