@@ -1,4 +1,4 @@
-"""Check exact McNemar paired inference using small synthetic cases."""
+"""使用小规模合成案例检查精确 McNemar 配对检验。"""
 import sys
 import unittest
 from pathlib import Path
