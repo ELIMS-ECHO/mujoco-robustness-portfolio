@@ -21,6 +21,7 @@ permissions:
 
 jobs:
   tests:
+    name: 运行自动化测试
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
