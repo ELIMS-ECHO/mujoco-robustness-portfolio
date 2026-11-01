@@ -13,6 +13,7 @@ import math
 import platform
 import sys
 from pathlib import Path
+from typing import Callable
 
 import numpy as np
 
@@ -111,7 +112,8 @@ def failure_bucket(min_gripper_distance: float, max_object_rise: float, ever_suc
 
 
 def evaluate(model, env, episode_count: int, seed_start: int, sigmas: list[float],
-             alpha: float, max_steps: int = DEFAULT_MAX_STEPS) -> list[dict]:
+             alpha: float, max_steps: int = DEFAULT_MAX_STEPS,
+             trace_callback: Callable[[dict], None] | None = None) -> list[dict]:
     if episode_count < 1 or seed_start < 0 or max_steps < 1:
         raise ValueError("episode_count 和 max_steps 必须为正数，seed_start 不能为负数")
     records: list[dict] = []
@@ -131,13 +133,20 @@ def evaluate(model, env, episode_count: int, seed_start: int, sigmas: list[float
             min_gripper_distance = float("inf")
             min_goal_distance = float("inf")
             while steps < max_steps:
+                true_pre = (
+                    np.array(obs["observation"][0:6], copy=True)
+                    if trace_callback is not None else None
+                )
                 if method == "clean":
-                    policy_obs = {key: np.array(value, copy=True) for key, value in obs.items()}
+                    noisy_obs = {key: np.array(value, copy=True) for key, value in obs.items()}
+                    policy_obs = noisy_obs
                 else:
-                    policy_obs = corrupt_position_observation(obs, sigma, rng)
+                    noisy_obs = corrupt_position_observation(obs, sigma, rng)
+                    policy_obs = noisy_obs
                     if method == "ema":
                         policy_obs = filter_.transform(policy_obs)
                 action, _ = model.predict(policy_obs, deterministic=True)
+                trace_action = np.array(action, copy=True) if trace_callback is not None else None
                 obs, reward, terminated, truncated, info = env.step(action)
                 steps += 1
                 episode_return += float(reward)
@@ -151,6 +160,23 @@ def evaluate(model, env, episode_count: int, seed_start: int, sigmas: list[float
                 last_success = bool(info.get("is_success", False))
                 if last_success and first_success is None:
                     first_success = steps
+                if trace_callback is not None:
+                    trace_callback({
+                        "method": method,
+                        "sigma_m": sigma,
+                        "seed": seed,
+                        "step": steps,
+                        "true_pre": true_pre,
+                        "noisy_pre": np.array(noisy_obs["observation"][0:6], copy=True),
+                        "policy_pre": np.array(policy_obs["observation"][0:6], copy=True),
+                        "action": trace_action,
+                        "post_observation": np.array(obs["observation"], copy=True),
+                        "post_achieved_goal": np.array(obs["achieved_goal"], copy=True),
+                        "post_desired_goal": np.array(obs["desired_goal"], copy=True),
+                        "reward": float(reward),
+                        "is_success": last_success,
+                        "initial_object_z": initial_z,
+                    })
                 if terminated or truncated:
                     break
             records.append({
