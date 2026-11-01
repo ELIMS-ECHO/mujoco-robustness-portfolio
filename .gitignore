@@ -1,0 +1,10 @@
+results/
+upstream-model/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+*.zip
+*.mp4
+*.gif
+!assets/*.gif
