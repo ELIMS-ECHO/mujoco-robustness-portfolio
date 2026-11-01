@@ -66,9 +66,25 @@ jobs:
           with (out / "episode_summary.csv").open(encoding="utf-8", newline="") as f:
               episode_rows = list(csv.DictReader(f))
           summary = json.loads((out / "diagnostics_summary.json").read_text(encoding="utf-8"))
+          baseline = json.loads(Path("evidence/summary.json").read_text(encoding="utf-8"))
           assert len(episode_rows) == summary["episodes_per_condition"] * 7
           assert trace_rows > len(episode_rows)
           assert len(summary["summary"]) == 7
+          expected = {
+              (row["method"], round(float(row["sigma_m"]), 6)): row
+              for row in baseline["summary"]
+          }
+          for row in summary["summary"]:
+              key = (row["method"], round(float(row["sigma_m"]), 6))
+              reference = expected[key]
+              assert row["final_success_count"] == reference["final_success_count"], (
+                  f"诊断轨迹与主评估终态成功数不一致：{key}; "
+                  f"{row['final_success_count']} != {reference['final_success_count']}"
+              )
+              assert row["ever_success_count"] == reference["ever_success_count"], (
+                  f"诊断轨迹与主评估曾成功数不一致：{key}; "
+                  f"{row['ever_success_count']} != {reference['ever_success_count']}"
+              )
           assert (out / "diagnostics_report.md").is_file()
           assert (out / "position_error_comparison.png").is_file()
           assert (out / "goal_distance_20mm.png").is_file()
