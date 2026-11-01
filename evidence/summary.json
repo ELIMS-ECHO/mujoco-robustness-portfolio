@@ -10,7 +10,7 @@
     0.01,
     0.02
   ],
-  "failure_buckets_warning": "Exploratory heuristic thresholds; not validated physical labels",
+  "failure_buckets_warning": "探索性启发式阈值；不是经过验证的物理标签",
   "dependency_versions": {
     "python": "3.11.17",
     "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.43",
@@ -21,26 +21,26 @@
     "stable-baselines3": "2.8.0",
     "torch": "2.15.0+cpu"
   },
-  "observation_noise": "independent Gaussian noise on gripper and object xyz, rederived relative xyz and achieved_goal",
+  "observation_noise": "分别对夹爪与物块 XYZ 位置观测加入独立高斯噪声，并重新计算相对 XYZ 与 achieved_goal",
   "episodes_per_condition": 30,
   "seed_start": 10000,
   "alpha": 0.35,
   "summary": [
     {
       "method": "clean",
-      "sigma_m": 0.0,
+      "sigma_m": 0,
       "episodes": 30,
       "ever_success_count": 30,
-      "ever_success_rate": 1.0,
+      "ever_success_rate": 1,
       "ever_success_95pct_wilson": [
         0.8864866068301441,
-        1.0
+        1
       ],
       "final_success_count": 30,
-      "final_success_rate": 1.0,
+      "final_success_rate": 1,
       "final_success_95pct_wilson": [
         0.8864866068301441,
-        1.0
+        1
       ],
       "mean_first_success_step_conditional": 9.733333333333333,
       "mean_episode_return": -8.733333333333333,
@@ -53,16 +53,16 @@
       "sigma_m": 0.005,
       "episodes": 30,
       "ever_success_count": 30,
-      "ever_success_rate": 1.0,
+      "ever_success_rate": 1,
       "ever_success_95pct_wilson": [
         0.8864866068301441,
-        1.0
+        1
       ],
       "final_success_count": 30,
-      "final_success_rate": 1.0,
+      "final_success_rate": 1,
       "final_success_95pct_wilson": [
         0.8864866068301441,
-        1.0
+        1
       ],
       "mean_first_success_step_conditional": 10.266666666666667,
       "mean_episode_return": -9.433333333333334,
@@ -99,10 +99,10 @@
       "sigma_m": 0.01,
       "episodes": 30,
       "ever_success_count": 30,
-      "ever_success_rate": 1.0,
+      "ever_success_rate": 1,
       "ever_success_95pct_wilson": [
         0.8864866068301441,
-        1.0
+        1
       ],
       "final_success_count": 28,
       "final_success_rate": 0.9333333333333333,
