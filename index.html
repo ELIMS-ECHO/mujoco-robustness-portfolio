@@ -58,8 +58,8 @@
 <header class="topbar">
   <div class="container inner">
     <a class="brand" href="#top"><span class="brandmark">R</span><span>ELIMS-ECHO <span class="muted">/ 工程作品集</span></span></a>
-    <nav aria-label="页面导航"><a href="#challenge">问题</a><a href="#architecture">方法</a><a href="#results">实验结果</a><a href="#demo">真实演示</a><a href="#contribution">个人贡献</a></nav>
-    <span class="status">真实仿真210回合 + 云端GIF 已完成</span>
+    <nav aria-label="页面导航"><a href="#challenge">问题</a><a href="#architecture">方法</a><a href="#results">实验结果</a><a href="#demo">仿真演示</a><a href="#contribution">个人贡献</a></nav>
+    <span class="status">MuJoCo 仿真 210 回合 + 云端 GIF 已完成</span>
   </div>
 </header>
 <main>
@@ -142,7 +142,7 @@
     <div class="method" style="margin-top:24px">
       <div class="panel"><span class="tag">基线</span><h3>无噪声基线</h3><p>无额外观测误差的原始环境，作为复现基线。</p><code>σ = 0 mm</code></div>
       <div class="panel"><span class="tag">噪声扰动</span><h3>未滤波观测</h3><p>分别对末端与物块 XYZ 注入独立高斯误差，避免坐标泄漏。</p><code>σ ∈ {5, 10, 20} mm</code></div>
-      <div class="panel"><span class="tag">滤波处理</span><h3>EMA 滤波</h3><p>对位置观测实施平滑，并记录滤波引入的响应延迟与可能损失。</p><code>α = 0.35 · 待调优</code></div>
+      <div class="panel"><span class="tag">滤波处理</span><h3>EMA 滤波</h3><p>对位置观测实施平滑，并记录滤波引入的响应延迟与可能损失。</p><code>α = 0.35 · 固定参数，未在正式评估集上调参</code></div>
     </div>
   </div></section>
 
@@ -157,9 +157,9 @@
     <div id="empty" class="empty"><span class="glyph">◇</span><strong>尚未加载实验数据</strong><p>当前没有加载有效的结果文件；默认内嵌已归档的210回合仿真，数据如未出现请刷新页面。</p><p class="small">输入：<code>evaluate_robustness.py</code> 输出的 <code>results/eval100/summary.json</code></p></div>
     <div id="data" class="hidden" aria-live="polite">
       <div class="metriccards">
-        <div class="metric"><div class="name">无噪声基线 基线</div><div class="value" id="m无噪声基线">—</div><div class="small muted">同一模型版本的无噪声基线评估</div></div>
+        <div class="metric"><div class="name">无噪声基线</div><div class="value" id="mClean">—</div><div class="small muted">同一模型版本的无噪声基线评估</div></div>
         <div class="metric"><div class="name">最大噪声条件下的未滤波策略</div><div class="value" id="mNoise">—</div><div class="small muted" id="mSigma">—</div></div>
-        <div class="metric"><div class="name">EMA 相对未滤波策略的差值</div><div class="value" id="mDelta">—</div><div class="small muted">百分点；同一噪声强度比较</div></div>
+        <div class="metric"><div class="name">EMA 相对未滤波策略的差值</div><div class="value" id="mDelta">—</div><div class="small muted">单位：百分点；在同一噪声强度下比较</div></div>
       </div>
       <div class="panel"><h3>各条件成功率</h3><div id="bars"></div><div class="tablewrap"><table><thead><tr><th>方法</th><th>位置误差</th><th>回合数</th><th>成功率</th><th>Wilson 95% 置信区间（当前指标）</th></tr></thead><tbody id="tbody"></tbody></table></div></div>
       <div class="muted small" style="padding-top:14px" id="metadata"></div>
@@ -169,11 +169,11 @@
   <section id="demo"><div class="container">
     <div class="eyebrow">04 / MuJoCo 仿真演示</div>
     <h2>相同随机种子下的仿真动作对比。</h2>
-    <p class="section-intro">20 mm 高斯位置噪声、初始种子 10001，真实 MuJoCo 运行50步。未滤波 SAC 最终失败；加入 EMA 的同一预训练策略在第37步首次成功、最终成功。为确保评估忠实，绘图使用独立渲染环境；结果与批量评估中的该种子一致。</p>
+    <p class="section-intro">20 mm 高斯位置噪声、初始种子 10001，MuJoCo 仿真运行 50 步。未滤波 SAC 最终失败；加入 EMA 的同一预训练策略在第37步首次成功、最终成功。为确保评估忠实，绘图使用独立渲染环境；结果与批量评估中的该种子一致。</p>
     <div class="panel">
       <span class="tag">云端验证通过 · 挑选的演示案例</span>
       <h3>左右双画面 GIF · 未滤波策略（20 mm）与 EMA 策略（20 mm）</h3>
-      <p>本仓库未上传第三方训练权重，也没有把经过挑选的演示轨迹当成总体成功率。真实仿真 GIF、逐案例 JSON 和模型 SHA-256 已归档在本仓库 assets/ 与 evidence/，详见演示报告。</p>
+      <p>本仓库未上传第三方训练权重，也没有把经过挑选的演示轨迹当成总体成功率。MuJoCo 仿真 GIF、逐案例 JSON 和模型 SHA-256 已归档在本仓库 assets/ 与 evidence/，详见演示报告。</p>
       <div class="actions">
         <a class="btn btn-primary" href="https://github.com/ELIMS-ECHO/mujoco-robustness-portfolio/blob/main/assets/demo.gif">查看仿真 GIF 与结果记录 ↗</a>
         <a class="btn" href="https://github.com/ELIMS-ECHO/mujoco-robustness-portfolio/blob/main/DEMO_REPORT_2026-11-01.md">查看演示录制一致性报告 ↗</a>
@@ -212,7 +212,7 @@
   const $ = id => document.getElementById(id);
   const fmt = n => Number.isFinite(n) ? (n*100).toFixed(1)+"%" : "—";
   const escaped = s => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-  const label = s => s === "clean" ? "无噪声基线" : s === "noisy" ? "Noisy" : s === "ema" ? "EMA" : s;
+  const label = s => s === "clean" ? "无噪声基线" : s === "noisy" ? "未滤波策略" : s === "ema" ? "EMA 滤波策略" : s;
   function render(){
     if(!current) return;
     const rows = current.summary;
@@ -220,7 +220,7 @@
     const clean = rows.find(r => r.method==="clean");
     const noisy = rows.filter(r => r.method==="noisy").sort((a,b)=>Number(b.sigma_m)-Number(a.sigma_m))[0];
     const ema = noisy && rows.find(r => r.method==="ema" && Number(r.sigma_m)===Number(noisy.sigma_m));
-    $("m无噪声基线").textContent = clean ? fmt(clean[key]) : "—";
+    $("mClean").textContent = clean ? fmt(clean[key]) : "—";
     $("mNoise").textContent = noisy ? fmt(noisy[key]) : "—";
     $("mSigma").textContent = noisy ? "噪声标准差 "+Math.round(noisy.sigma_m*1000)+" mm" : "—";
     $("mDelta").textContent = ema && noisy ? ((ema[key]-noisy[key])*100>0?"+":"")+((ema[key]-noisy[key])*100).toFixed(1)+" 个百分点" : "—";
