@@ -90,8 +90,10 @@ def make_gif(runs: list[tuple[list[np.ndarray], dict]], out_path: Path, fps: int
     font_path = next((path for path in font_candidates if path.is_file()), None)
     if font_path is None:
         raise RuntimeError("未找到支持中文的字体。请安装 Noto Sans CJK，或在 Windows 上安装微软雅黑。")
-    title_font = ImageFont.truetype(str(font_path), 18)
-    status_font = ImageFont.truetype(str(font_path), 14)
+    # NotoSansCJK-Regular.ttc 的第 2 个字形集合对应简体中文（SC）。
+    font_index = 2 if font_path.name == "NotoSansCJK-Regular.ttc" else 0
+    title_font = ImageFont.truetype(str(font_path), 18, index=font_index)
+    status_font = ImageFont.truetype(str(font_path), 14, index=font_index)
 
     length = max(len(frames) for frames, _ in runs)
     result_frames = []
