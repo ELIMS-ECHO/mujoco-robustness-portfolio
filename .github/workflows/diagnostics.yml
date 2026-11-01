@@ -1,0 +1,112 @@
+name: EMA 轨迹机制诊断
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/diagnostics.yml"
+      - "diagnose_trajectories.py"
+      - "evaluate_robustness.py"
+      - "download_checkpoint.py"
+      - "requirements.txt"
+  workflow_dispatch:
+    inputs:
+      episodes:
+        description: "每个条件使用的环境随机种子数量"
+        required: true
+        default: "30"
+        type: string
+      seed_start:
+        description: "起始环境随机种子"
+        required: true
+        default: "10000"
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ema-trajectory-diagnostics
+  cancel-in-progress: false
+
+jobs:
+  diagnose:
+    name: 记录真实仿真轨迹并分析滤波误差
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - name: 获取公开作品集源码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 配置 Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: 安装 CPU 版 PyTorch 与项目依赖
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -r requirements.txt
+
+      - name: 下载固定版本第三方策略并核验 SHA-256
+        run: python download_checkpoint.py --output-dir upstream-model
+
+      - name: 执行逐仿真步轨迹诊断
+        run: |
+          python diagnose_trajectories.py \
+            --model upstream-model/best_model.zip \
+            --episodes "\${{ inputs.episodes || '30' }}" \
+            --seed-start "\${{ inputs.seed_start || '10000' }}" \
+            --output results/trajectory-diagnostics
+
+      - name: 检查轨迹数据与诊断报告
+        run: |
+          python - <<'PY'
+          import csv
+          import gzip
+          import json
+          from pathlib import Path
+
+          out = Path("results/trajectory-diagnostics")
+          with gzip.open(out / "trajectory_steps.csv.gz", "rt", encoding="utf-8", newline="") as f:
+              trace_rows = sum(1 for _ in csv.DictReader(f))
+          with (out / "episode_summary.csv").open(encoding="utf-8", newline="") as f:
+              episode_rows = list(csv.DictReader(f))
+          summary = json.loads((out / "diagnostics_summary.json").read_text(encoding="utf-8"))
+          assert len(episode_rows) == summary["episodes_per_condition"] * 7
+          assert trace_rows > len(episode_rows)
+          assert len(summary["summary"]) == 7
+          assert (out / "diagnostics_report.md").is_file()
+          assert (out / "position_error_comparison.png").is_file()
+          assert (out / "goal_distance_20mm.png").is_file()
+          print(f"验收通过：{len(episode_rows)} 个回合，{trace_rows} 条逐步轨迹记录，7 组条件。")
+          PY
+
+      - name: 上传诊断结果构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: EMA-轨迹机制诊断证据包
+          path: results/trajectory-diagnostics/
+          retention-days: 30
+
+      - name: 将可追溯诊断证据归档到公开仓库
+        run: |
+          mkdir -p evidence/trajectory-diagnostics
+          cp results/trajectory-diagnostics/trajectory_steps.csv.gz evidence/trajectory-diagnostics/
+          cp results/trajectory-diagnostics/episode_summary.csv evidence/trajectory-diagnostics/
+          cp results/trajectory-diagnostics/diagnostics_summary.json evidence/trajectory-diagnostics/
+          cp results/trajectory-diagnostics/diagnostics_report.md evidence/trajectory-diagnostics/
+          cp results/trajectory-diagnostics/position_error_comparison.png evidence/trajectory-diagnostics/
+          cp results/trajectory-diagnostics/goal_distance_20mm.png evidence/trajectory-diagnostics/
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f evidence/trajectory-diagnostics/
+          if ! git diff --cached --quiet; then
+            git commit -m "归档 EMA 逐步轨迹诊断证据 [skip ci]"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
