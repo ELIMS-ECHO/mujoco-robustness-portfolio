@@ -12,6 +12,8 @@ from pathlib import Path
 
 REPO_ID = "hhmm1122/fetch-pickandplace-sac-her"
 FILENAME = "best_model.zip"
+DEFAULT_REVISION = "c817f4a3033fb4bde985bfcfe93ed5d8b949b04b"
+EXPECTED_SHA256 = "1aad52960bc0b7baaa5249f3aa1a2de09009c300dd2b0bf61c9c51d7467b017b"
 
 
 def sha256(path: Path) -> str:
@@ -30,7 +32,7 @@ def main() -> None:
 
     # Use the immutable revision that was evaluated and recorded in the evidence.
     # Override only when deliberately testing a different upstream checkpoint.
-    parser.add_argument("--revision", default="c817f4a3033fb4bde985bfcfe93ed5d8b949b04b")
+    parser.add_argument("--revision", default=DEFAULT_REVISION)
     args = parser.parse_args()
     remote_sha = args.revision
     if not remote_sha or len(remote_sha) != 40:
@@ -42,11 +44,17 @@ def main() -> None:
         revision=remote_sha,
         local_dir=str(args.output_dir),
     ))
+    checkpoint_sha = sha256(checkpoint)
+    if remote_sha == DEFAULT_REVISION and checkpoint_sha != EXPECTED_SHA256:
+        raise RuntimeError(
+            "Downloaded checkpoint hash does not match the verified portfolio baseline: "
+            f"expected {EXPECTED_SHA256}, got {checkpoint_sha}"
+        )
     manifest = {
         "model_id": REPO_ID,
         "filename": FILENAME,
         "revision": remote_sha,
-        "checkpoint_sha256": sha256(checkpoint),
+        "checkpoint_sha256": checkpoint_sha,
         "checkpoint_path": str(checkpoint.resolve()),
         "source": "https://huggingface.co/" + REPO_ID,
         "license_note": "Check upstream terms; no redistribution or license claim is made here.",
