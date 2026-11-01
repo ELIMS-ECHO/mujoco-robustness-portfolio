@@ -1,15 +1,15 @@
-name: Reproduce 30-seed MuJoCo evaluation
+name: 复现 30 个随机种子的 MuJoCo 评估
 
 on:
   workflow_dispatch:
     inputs:
       episodes:
-        description: "Episodes per condition (30 reproduces the published evaluation)"
+        description: "每组条件的评估回合数（30 可复现本报告中的实验规模）"
         required: true
         default: "30"
         type: string
       seed_start:
-        description: "First environment seed (10000 reproduces the published evaluation)"
+        description: "起始环境随机种子（10000 对应本报告中的评估范围）"
         required: true
         default: "10000"
         type: string
@@ -26,34 +26,34 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Install CPU PyTorch and project dependencies
+      - name: 安装 CPU 版 PyTorch 与项目依赖
         run: |
           python -m pip install --upgrade pip
           python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
           python -m pip install -r requirements.txt
-      - name: Download the pinned third-party checkpoint and verify SHA-256
+      - name: 下载固定版本的第三方模型并核验 SHA-256
         run: python download_checkpoint.py --output-dir upstream-model
-      - name: Run the requested matched-seed evaluation
+      - name: 执行指定规模的配对随机种子评估
         run: |
           python evaluate_robustness.py \
             --model upstream-model/best_model.zip --hf-compatible \
             --episodes "${{ inputs.episodes }}" \
             --seed-start "${{ inputs.seed_start }}" \
             --output results/public-evaluation
-      - name: Plot measured results
+      - name: 根据实测结果生成图表
         run: |
           python plot_results.py \
             --summary results/public-evaluation/summary.json \
             --output results/public-evaluation/success_rate_comparison.png
-      - name: Run paired-seed analysis
+      - name: 执行配对随机种子统计分析
         run: |
           python analyze_paired.py \
             --episodes results/public-evaluation/episodes.csv \
             --output results/public-evaluation/paired_analysis.json
-      - name: Upload raw data, summary, plots and provenance
+      - name: 上传原始数据、汇总结果、图表与模型来源记录
         uses: actions/upload-artifact@v4
         with:
-          name: mujoco-public-evaluation-evidence
+          name: 机械臂鲁棒性评估证据包
           path: |
             results/public-evaluation/
             upstream-model/model_provenance.json
