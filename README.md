@@ -79,7 +79,7 @@ flowchart LR
 - 该 GIF 是**单个经过挑选的说明性案例**，不是随机抽样，也不代表总体成功率。总体表现应以以上 210 回合独立评估为准。
 - GIF 由公开仓库中的[仿真演示工作流](./.github/workflows/demo.yml)生成；它不是实体机械臂录像。
 
-独立 HTML 仪表盘源码位于 [index.html](./index.html)。目前可以下载后在浏览器本地打开；尚未配置 GitHub Pages 公网部署。
+独立 HTML 作品集页面已通过 [GitHub Pages 公网部署](https://elims-echo.github.io/mujoco-robustness-portfolio/)；源码位于 [index.html](./index.html)。Windows 本机演示仍待独立验收。
 
 ## 公开实验原始证据
 
