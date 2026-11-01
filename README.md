@@ -116,14 +116,14 @@ flowchart LR
 conda create -n mujoco-portfolio python=3.11 -y
 conda activate mujoco-portfolio
 
-# 安装固定版本依赖，并先运行小规模冒烟测试
+# 首次安装完整依赖，并运行冒烟测试：每组条件 5 个种子，共 35 回合
 .\RUN_WINDOWS.ps1 -InstallDependencies -Episodes 5
 
-# 冒烟测试通过后，再扩大评估规模
-.\RUN_WINDOWS.ps1 -Episodes 100
+# 冒烟测试通过后，可按正式评估的 30 个种子规模本机复核
+.\RUN_WINDOWS.ps1 -Episodes 30 -SeedStart 10000
 ~~~
 
-脚本会从 Hugging Face 下载固定版本的第三方模型，并记录 SHA-256。它不会训练模型，也不会覆盖上游模型。Windows 本机渲染和运行尚未完成独立验收；已统计的 245 回合实验均在 GitHub Linux 运行器上执行。
+脚本会从 Hugging Face 下载固定版本的第三方模型，并记录 SHA-256；随后执行单元测试、MuJoCo 评估、图表生成和配对分析。它不会训练模型，也不会覆盖上游模型。Windows 本机运行尚未完成独立验收；已归档的 245 回合实验均在 GitHub Linux 运行器上执行。
 
 ### 正式评估设置
 
@@ -161,6 +161,7 @@ mujoco-robustness-portfolio/
 │   ├── demo.yml               # 仿真演示生成
 │   └── evaluate.yml           # 完整评估复现
 ├── evaluate_robustness.py     # 位置扰动、EMA、评估与统计
+├── diagnose_trajectories.py   # 逐仿真步记录真实位置、观测误差、滤波滞后与动作
 ├── analyze_paired.py          # 配对随机种子与探索性统计
 ├── plot_results.py            # 根据真实汇总数据生成图表
 ├── record_demo.py             # 使用独立渲染环境录制演示
