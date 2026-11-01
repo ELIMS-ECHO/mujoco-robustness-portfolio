@@ -77,7 +77,21 @@ def one_run(model, env, render_env, seed: int, method: str, sigma: float, alpha:
 
 def make_gif(runs: list[tuple[list[np.ndarray], dict]], out_path: Path, fps: int) -> None:
     import imageio.v2 as imageio
-    from PIL import Image, ImageDraw
+    from PIL import Image, ImageDraw, ImageFont
+
+    # 演示画面包含中文标签，必须使用具备中文字形的字体。
+    font_candidates = [
+        Path("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"),
+        Path("/usr/share/fonts/opentype/noto/NotoSansCJKsc-Regular.otf"),
+        Path("/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc"),
+        Path("C:/Windows/Fonts/msyh.ttc"),
+        Path("C:/Windows/Fonts/simhei.ttf"),
+    ]
+    font_path = next((path for path in font_candidates if path.is_file()), None)
+    if font_path is None:
+        raise RuntimeError("未找到支持中文的字体。请安装 Noto Sans CJK，或在 Windows 上安装微软雅黑。")
+    title_font = ImageFont.truetype(str(font_path), 18)
+    status_font = ImageFont.truetype(str(font_path), 14)
 
     length = max(len(frames) for frames, _ in runs)
     result_frames = []
@@ -91,9 +105,9 @@ def make_gif(runs: list[tuple[list[np.ndarray], dict]], out_path: Path, fps: int
             canvas.paste(image, (x, 40))
             draw = ImageDraw.Draw(canvas)
             name = "未滤波策略 20 mm" if info["method"] == "noisy" else "EMA 策略 20 mm"
-            draw.text((14, 12), f"{name} | 随机种子={info['seed']}", fill=(210, 241, 230))
+            draw.text((14, 12), f"{name}｜随机种子={info['seed']}", fill=(210, 241, 230), font=title_font)
             label = "终态成功" if info["final_success"] else "终态失败"
-            draw.text((14, 397), f"{label} (回合结束结果；非实时状态)", fill=(238, 189, 126))
+            draw.text((14, 397), f"{label}（回合结束结果；非实时状态）", fill=(238, 189, 126), font=status_font)
             columns.append(np.asarray(canvas))
         result_frames.append(np.concatenate(columns, axis=1))
     out_path.parent.mkdir(parents=True, exist_ok=True)
