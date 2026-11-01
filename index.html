@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="MuJoCo FetchPickAndPlace: SAC+HER 机械臂抓放策略的观测噪声鲁棒性评估，包含方法、可复现实验与真实数据可视化。">
+  <title>Robust Manipulation | Robotics Engineering Portfolio</title>
+  <style>
+    :root{--bg:#071018;--panel:#0e1b24;--panel2:#12232d;--line:#29404c;--text:#edf4f3;--muted:#9bb0b9;--mint:#76e2c5;--gold:#f2c37c;--blue:#79a9ed;--radius:20px}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.7 Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC",sans-serif}
+    a{color:inherit;text-decoration:none}a:hover{color:var(--mint)}button,select,input{font:inherit}
+    .container{max-width:1120px;padding:0 28px;margin:auto}.small{font-size:12px}.muted{color:var(--muted)}.eyebrow{color:var(--mint);font-size:12px;font-weight:800;letter-spacing:.18em;text-transform:uppercase}
+    .topbar{position:sticky;top:0;z-index:20;border-bottom:1px solid #273640c7;background:#071018e8;backdrop-filter:blur(18px)}
+    .topbar .inner{min-height:70px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+    .brand{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:800;letter-spacing:.03em}.brandmark{width:34px;height:34px;border:1px solid var(--mint);color:var(--mint);border-radius:10px;display:grid;place-items:center;font-size:17px}
+    nav{display:flex;gap:24px;color:#b7c7cc;font-size:13px}nav a:hover{color:#fff}
+    .status{display:inline-flex;align-items:center;gap:8px;border:1px solid #436451;background:#193128;padding:7px 12px;border-radius:50px;font-size:12px;color:#beeed7;font-weight:600}
+    .status::before{content:"";width:7px;height:7px;border-radius:50%;background:#eab665}
+    .hero{padding:84px 0 55px;display:grid;grid-template-columns:1.15fr .85fr;gap:45px;align-items:center}
+    h1{font-size:clamp(36px,5.5vw,65px);line-height:1.12;letter-spacing:-.055em;margin:16px 0 24px;font-weight:830}h1 span{color:var(--mint)}
+    .lead{color:#b2c5ca;font-size:17px;max-width:560px;line-height:1.85}
+    .actions{display:flex;gap:12px;flex-wrap:wrap;margin:30px 0}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;padding:11px 17px;font-size:13px;font-weight:750;border:1px solid #557782;background:#17313b;transition:.15s}
+    .btn:hover{transform:translateY(-1px);color:#fff;border-color:var(--mint)}.btn-primary{color:#07231d;background:var(--mint);border-color:var(--mint)}.btn-primary:hover{color:#071e19}
+    .hero-visual{background:radial-gradient(circle at 62% 35%,#224a50,#111f2a 50%,#0a151f 85%);border:1px solid #39515c;border-radius:30px;position:relative;aspect-ratio:1;overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:300px}
+    .hero-visual::after{content:"SIMULATION CONCEPT · NOT A RESULT";position:absolute;bottom:18px;right:20px;color:#c2d2d6;font-size:9px;letter-spacing:.12em}
+    .hero-visual svg{width:95%;height:95%}
+    .micro{display:flex;gap:17px;flex-wrap:wrap;color:#92aab2;font-size:12px}.micro b{color:var(--text);font-weight:650}
+    section{padding:64px 0;border-top:1px solid #233642}h2{font-size:clamp(25px,3vw,35px);letter-spacing:-.035em;line-height:1.25;margin:12px 0 16px}h3{font-size:18px;margin:10px 0 12px;letter-spacing:-.02em}p{margin:8px 0 14px}
+    .section-intro{max-width:790px;color:var(--muted);font-size:15px;margin-bottom:30px}
+    .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.panel{background:linear-gradient(155deg,var(--panel),#0c1720);border:1px solid var(--line);border-radius:var(--radius);padding:26px}.panel p{color:var(--muted);font-size:14px}
+    .index{font:700 12px/1 ui-monospace,Consolas,monospace;color:var(--mint)}
+    .pipeline{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;align-items:stretch}
+    .step{background:#10212b;border:1px solid #36505d;border-radius:14px;padding:20px 13px;min-height:135px;position:relative}.step strong{display:block;font-size:14px;margin:9px 0}.step span{color:var(--muted);font-size:12px}.step:not(:last-child)::after{content:"→";position:absolute;right:-11px;top:45%;font-weight:800;color:var(--mint);z-index:2}
+    .method{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}.tag{display:inline-block;font-size:11px;font-weight:750;letter-spacing:.04em;border:1px solid #557782;border-radius:100px;padding:3px 9px;color:var(--mint)}
+    .method .panel:nth-child(2) .tag{color:var(--gold);border-color:#826a43}.method .panel:nth-child(3) .tag{color:var(--blue);border-color:#4e6791}
+    .method code{font:12px/1.6 ui-monospace,Consolas,monospace;white-space:normal;color:#d7e0e5}
+    .results-head{display:flex;align-items:flex-end;justify-content:space-between;gap:25px;flex-wrap:wrap}
+    .inputwrap{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .filelabel{cursor:pointer;display:inline-block;background:var(--mint);color:#08281f;border-radius:10px;padding:10px 18px;font-weight:750;font-size:13px}
+    .filelabel:hover{background:#a8f5df}.filelabel input{display:none}.select{background:#142833;border:1px solid #385460;color:var(--text);padding:10px;border-radius:10px;font-size:13px}
+    .empty{padding:48px 20px;text-align:center;border:1px dashed #3e626a;background:#10232c;border-radius:17px;margin-top:22px}
+    .empty .glyph{display:block;font-size:36px;opacity:.7;margin-bottom:12px}.empty strong{font-size:18px}.empty p{max-width:580px;margin:12px auto;color:var(--muted)}
+    .metriccards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:25px 0}.metric{background:#12242d;border:1px solid #36505c;border-radius:15px;padding:18px}
+    .metric .value{font-size:31px;font-weight:800;letter-spacing:-.035em}.metric .name{color:#a8bac1;font-size:12px}
+    .chartrow{display:grid;grid-template-columns:130px minmax(0,1fr) 55px;gap:15px;align-items:center;margin:14px 0}.bartrack{background:#263943;height:18px;border-radius:5px;overflow:hidden}.bar{height:100%;background:var(--mint);border-radius:5px;min-width:1px}.bar.noisy{background:var(--gold)}.bar.ema{background:var(--blue)}.chartlabel{font-size:12px;color:#d6e3e6}.chartval{text-align:right;font:700 13px ui-monospace,Consolas,monospace}
+    .tablewrap{overflow:auto;margin-top:26px}table{border-collapse:collapse;width:100%;font-size:13px;min-width:680px}th,td{padding:13px 12px;border-bottom:1px solid #31424a;text-align:left}th{font-weight:700;color:#a9c2c9}td{color:#e7edef}
+    .contribution{display:grid;grid-template-columns:1fr 1fr;gap:18px}.callout{border-left:3px solid var(--mint);padding-left:20px;color:#c2d1d6}.callout.legacy{border-color:#bd8c4a}
+    .stepslist{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}.stepslist .panel{padding:18px}
+    footer{padding:40px 0 70px;border-top:1px solid #263944;color:#9aafb7;font-size:12px;display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap}
+    .hidden{display:none!important}.error{color:#ffb0a8;font-size:13px;margin:10px 0}
+    @media(max-width:820px){.hero{grid-template-columns:1fr;padding-top:50px}.hero-visual{max-height:400px}.grid-3,.method,.stepslist{grid-template-columns:1fr 1fr}.pipeline{grid-template-columns:1fr 1fr}.step:not(:last-child)::after{display:none}.contribution{grid-template-columns:1fr}nav{display:none}}
+    @media(max-width:540px){.container{padding:0 18px}.topbar .inner{min-height:58px}.hero{gap:22px}.grid-3,.method,.stepslist,.metriccards{grid-template-columns:1fr}.pipeline{grid-template-columns:1fr}.section{padding:44px 0}section{padding:45px 0}.panel{padding:19px}.chartrow{grid-template-columns:100px minmax(0,1fr) 50px;gap:8px}}
+  </style>
+</head>
+<body>
+<header class="topbar">
+  <div class="container inner">
+    <a class="brand" href="#top"><span class="brandmark">R</span><span>ELIMS-ECHO <span class="muted">/ ENGINEERING</span></span></a>
+    <nav aria-label="页面导航"><a href="#challenge">问题</a><a href="#architecture">方法</a><a href="#results">实验结果</a><a href="#demo">真实演示</a><a href="#contribution">个人贡献</a></nav>
+    <span class="status">真实仿真210回合 + 云端GIF 已完成</span>
+  </div>
+</header>
+<main>
+  <div class="container">
+    <div class="hero" id="top">
+      <div>
+        <div class="eyebrow">ROBOTICS · REINFORCEMENT LEARNING · 01 / CASE STUDY</div>
+        <h1>让机械臂在<br><span>不确定观测</span>下<br>可靠抓取。</h1>
+        <p class="lead">基于 MuJoCo FetchPickAndPlace 的 SAC + HER 策略，构建位置观测噪声评估、EMA 滤波对照与可复现实验流水线。关注的不只是“能否成功”，还有策略在误差下如何失败。</p>
+        <div class="actions">
+          <a class="btn btn-primary" href="#results">查看实验面板 ↘</a>
+          <a class="btn" href="https://github.com/ELIMS-ECHO/mujoco-robustness-portfolio">查看我的源码 ↗</a>
+        </div>
+        <div class="micro"><span><b>环境</b> FetchPickAndPlace-v4</span><span><b>策略</b> SAC + HER</span><span><b>新增工作</b> Robustness Evaluation</span></div>
+      </div>
+      <div class="hero-visual" aria-label="机械臂抓取系统的概念示意图，并非MuJoCo实际截图">
+        <svg viewBox="0 0 480 470" role="img" aria-label="机械臂抓取物块，带有噪声和目标位置的概念性示意图">
+          <defs><linearGradient id="arm" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#87b1c5"/><stop offset="1" stop-color="#34616e"/></linearGradient><radialGradient id="glow"><stop stop-color="#75e6c7" stop-opacity=".17"/><stop offset="1" stop-color="#75e6c7" stop-opacity="0"/></radialGradient></defs>
+          <circle cx="238" cy="218" r="194" fill="url(#glow)"/>
+          <g opacity=".18" stroke="#8ab6bc"><path d="M36 340H446M55 374H421M90 406H392"/><path d="M40 342 130 428M128 342 183 428M215 342 236 428M301 342 288 428M395 342 341 428"/></g>
+          <path d="M44 339 174 296 432 342 290 393Z" fill="#1b3743" stroke="#66848c" stroke-width="2"/>
+          <path d="M44 339V355L290 411V393M290 393 432 342V359L290 411" fill="#112b36" stroke="#4e6e7b" stroke-width="1.5"/>
+          <path d="M170 296 170 315 257 333" stroke="#49707c" fill="none" stroke-dasharray="5 5"/>
+          <ellipse cx="337" cy="347" rx="58" ry="18" fill="#7ce5bd" opacity=".1"/>
+          <circle cx="337" cy="325" r="31" stroke="#75e6c7" stroke-width="2" stroke-dasharray="6 7" fill="none"/>
+          <path d="M325 325h24m-12-12v24" stroke="#75e6c7" stroke-width="2"/>
+          <text x="340" y="290" font-size="11" fill="#a8eedb">GOAL</text>
+          <path d="M230 324 255 313 286 326 262 339Z" fill="#efbb78" stroke="#f6d294" stroke-width="2"/>
+          <path d="M230 324V354L262 367V339Z" fill="#b17b4f" stroke="#e1aa71"/>
+          <path d="M262 339 286 326V354L262 367Z" fill="#d59e66" stroke="#e1aa71"/>
+          <g stroke-linecap="round" stroke-linejoin="round">
+            <ellipse cx="145" cy="302" rx="56" ry="15" fill="#10232a" stroke="#4f7584" stroke-width="2"/>
+            <path d="M112 302V285Q145 268 179 284V302" fill="#406877" stroke="#89adbd" stroke-width="3"/>
+            <circle cx="144" cy="285" r="18" fill="#83a9b6" stroke="#c2dbda" stroke-width="3"/>
+            <path d="M144 283 132 198" stroke="#153944" stroke-width="44"/>
+            <path d="M144 283 132 198" stroke="url(#arm)" stroke-width="32"/>
+            <circle cx="132" cy="197" r="22" fill="#234956" stroke="#9fc3c8" stroke-width="5"/>
+            <path d="M132 197 222 133" stroke="#153944" stroke-width="39"/>
+            <path d="M132 197 222 133" stroke="url(#arm)" stroke-width="27"/>
+            <circle cx="222" cy="133" r="20" fill="#315d67" stroke="#bedada" stroke-width="5"/>
+            <path d="M222 133 266 211" stroke="#173c47" stroke-width="32"/>
+            <path d="M222 133 266 211" stroke="url(#arm)" stroke-width="21"/>
+            <circle cx="266" cy="211" r="13" fill="#9ac4c4" stroke="#d6e7dd" stroke-width="3"/>
+            <path d="M266 211V264" stroke="#79a9b8" stroke-width="15"/>
+            <path d="M257 261 252 292M275 261 280 292" stroke="#bad9db" stroke-width="9"/>
+          </g>
+          <g stroke="#eac18b" stroke-width="1.5" fill="none" opacity=".9"><circle cx="266" cy="305" r="24" stroke-dasharray="3 5"/><path d="M239 305h54M266 278v54"/></g>
+          <path d="M290 260q49-47 93-34" fill="none" stroke="#f4c586" stroke-width="1.6" stroke-dasharray="3 8"/>
+          <circle cx="383" cy="226" r="4" fill="#f4c586"/>
+          <text x="358" y="209" font-size="10" fill="#f4c586">NOISE</text>
+          <rect x="32" y="37" width="118" height="32" rx="8" fill="#152c36" stroke="#3d6470"/>
+          <circle cx="48" cy="53" r="5" fill="#79e5bf"/><text x="61" y="57" fill="#d2e3e5" font-size="11">SIMULATION</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <section id="challenge"><div class="container">
+    <div class="eyebrow">01 / THE CHALLENGE</div>
+    <h2>高成功率，不等于强鲁棒性。</h2>
+    <p class="section-intro">原开源项目提供 FetchPickAndPlace SAC + HER 预训练策略，并报告其干净环境下的评估成功率。但真实应用存在位置测量误差。我们先固定原策略，在不重新训练的条件下检验策略是否对噪声敏感。</p>
+    <div class="grid-3">
+      <div class="panel"><span class="index">QUESTION 01</span><h3>噪声敏感性</h3><p>随着观测 XYZ 误差增大，机械臂的任务成功率是否下降？变化幅度有多大？</p></div>
+      <div class="panel"><span class="index">QUESTION 02</span><h3>失败定位</h3><p>失败主要发生在接近、抓取、抬升还是放置阶段？指标定义能否揭示误判？</p></div>
+      <div class="panel"><span class="index">QUESTION 03</span><h3>简单干预的价值</h3><p>指数移动平均（EMA）能否降低噪声影响？它带来的响应延迟又会造成什么代价？</p></div>
+    </div>
+  </div></section>
+
+  <section id="architecture"><div class="container">
+    <div class="eyebrow">02 / THE SYSTEM</div>
+    <h2>从可控扰动到可解释的实验结果。</h2>
+    <p class="section-intro">原始仿真物理状态不变。只对传入策略的观测加入随机误差，保持原模型、初始种子和评估口径一致，再进行对照。</p>
+    <div class="pipeline">
+      <div class="step"><span class="index">01</span><strong>MuJoCo</strong><span>FetchPickAndPlace-v4 环境</span></div>
+      <div class="step"><span class="index">02</span><strong>Observation</strong><span>末端、物块、相对位置</span></div>
+      <div class="step"><span class="index">03</span><strong>Intervention</strong><span>高斯噪声 / EMA 滤波</span></div>
+      <div class="step"><span class="index">04</span><strong>SAC Policy</strong><span>固定的开源预训练策略</span></div>
+      <div class="step"><span class="index">05</span><strong>Evaluation</strong><span>成功率 / 步数 / 回报 / CSV</span></div>
+    </div>
+    <div class="method" style="margin-top:24px">
+      <div class="panel"><span class="tag">CONTROL</span><h3>Clean</h3><p>无额外观测误差的原始环境，作为复现基线。</p><code>σ = 0 mm</code></div>
+      <div class="panel"><span class="tag">PERTURBATION</span><h3>Noisy observation</h3><p>分别对末端与物块 XYZ 注入独立高斯误差，避免坐标泄漏。</p><code>σ ∈ {5, 10, 20} mm</code></div>
+      <div class="panel"><span class="tag">INTERVENTION</span><h3>EMA filtering</h3><p>对位置观测实施平滑，并记录滤波引入的响应延迟与可能损失。</p><code>α = 0.35 · 待调优</code></div>
+    </div>
+  </div></section>
+
+  <section id="results"><div class="container">
+    <div class="eyebrow">03 / EVIDENCE, NOT CLAIMS</div>
+    <div class="results-head">
+      <div><h2>真实实验仪表盘</h2><p class="section-intro" style="margin:0">本页面只展示可追溯到逐回合 CSV 和 summary.json 的真实仿真数据，不生成假数据。默认显示独立30种子评估；导入运行脚本生成的 <code>summary.json</code> 可替换显示其他真实结果。</p></div>
+      <div class="inputwrap"><label class="filelabel">导入 summary.json <input id="file" type="file" accept=".json,application/json"></label><select id="metric" class="select" aria-label="成功率指标"><option value="ever_success_rate">曾达到目标成功率</option><option value="final_success_rate">终态成功率</option></select></div>
+    </div>
+    <p class="muted small">默认展示本仓库 evidence/ 中归档的30种子、7条件、共210回合真实 MuJoCo 评估。仍属单个预训练策略的仿真实验，不等于泛化结论；可导入新 summary.json，文件只在本地读取。</p>
+    <div id="error" class="error" role="alert"></div>
+    <div id="empty" class="empty"><span class="glyph">◇</span><strong>尚未加载实验数据</strong><p>当前没有加载有效的结果文件；默认内嵌GitHub云端验证的210回合仿真，数据如未出现请刷新页面。</p><p class="small">输入：<code>evaluate_robustness.py</code> 输出的 <code>results/eval100/summary.json</code></p></div>
+    <div id="data" class="hidden" aria-live="polite">
+      <div class="metriccards">
+        <div class="metric"><div class="name">Clean 基线</div><div class="value" id="mClean">—</div><div class="small muted">相同 checkpoint 的本地评估</div></div>
+        <div class="metric"><div class="name">最大噪声条件下，未滤波</div><div class="value" id="mNoise">—</div><div class="small muted" id="mSigma">—</div></div>
+        <div class="metric"><div class="name">EMA 与未滤波差值</div><div class="value" id="mDelta">—</div><div class="small muted">百分点；同一噪声强度比较</div></div>
+      </div>
+      <div class="panel"><h3>各条件成功率</h3><div id="bars"></div><div class="tablewrap"><table><thead><tr><th>方法</th><th>位置误差</th><th>回合数</th><th>成功率</th><th>Wilson 95% CI（当前指标）</th></tr></thead><tbody id="tbody"></tbody></table></div></div>
+      <div class="muted small" style="padding-top:14px" id="metadata"></div>
+    </div>
+  </div></section>
+
+  <section id="demo"><div class="container">
+    <div class="eyebrow">04 / ACTUAL MUJOCO DEMONSTRATION</div>
+    <h2>同一种子下的真实动作对比。</h2>
+    <p class="section-intro">20 mm 高斯位置噪声、初始种子 10001，真实 MuJoCo 运行50步。未滤波 SAC 最终失败；加入 EMA 的同一预训练策略在第37步首次成功、最终成功。为确保评估忠实，绘图使用独立渲染环境；结果与批量评估中的该种子一致。</p>
+    <div class="panel">
+      <span class="tag">CLOUD VERIFIED · SELECTED EXAMPLE</span>
+      <h3>左右双画面 GIF · Noisy 20 mm vs EMA 20 mm</h3>
+      <p>本仓库未上传第三方训练权重，也没有把经过挑选的演示轨迹当成总体成功率。真实仿真 GIF、逐案例 JSON 和模型 SHA-256 已归档在本仓库 assets/ 与 evidence/，详见演示报告。</p>
+      <div class="actions">
+        <a class="btn btn-primary" href="https://github.com/ELIMS-ECHO/mujoco-robustness-portfolio/blob/main/assets/demo.gif">下载真实 GIF 与结果日志 ↗</a>
+        <a class="btn" href="https://github.com/ELIMS-ECHO/mujoco-robustness-portfolio/blob/main/DEMO_REPORT_2026-11-01.md">查看录制一致性报告 ↗</a>
+      </div>
+    </div>
+  </div></section>
+
+  <section id="contribution"><div class="container">
+    <div class="eyebrow">04 / ATTRIBUTION & OWNERSHIP</div>
+    <h2>哪些是已有成果，哪些是我的工作？</h2>
+    <div class="contribution">
+      <div class="panel"><span class="index">UPSTREAM RESEARCH</span><h3>开源基础</h3><p class="callout legacy">SAC + HER 预训练模型及模型卡里的自报结果归属于 <a href="https://huggingface.co/hhmm1122/fetch-pickandplace-sac-her" style="color:var(--gold);text-decoration:underline">hhmm1122/fetch-pickandplace-sac-her</a>。本项目没有将其当成个人原创贡献。</p></div>
+      <div class="panel"><span class="index">MY IMPLEMENTATION</span><h3>个人新增模块</h3><p class="callout">位置噪声注入、相对坐标一致性处理、EMA 滤波、配对环境种子、多指标统计、输出 CSV/JSON、基础单元测试和本作品集仪表盘。代码已提交，真实结果待验证。</p></div>
+    </div>
+  </div></section>
+
+  <section id="next"><div class="container">
+    <div class="eyebrow">05 / MILESTONES</div>
+    <h2>距离正式求职展示，还差这四关。</h2>
+    <div class="stepslist">
+      <div class="panel"><span class="index">A · PENDING</span><h3>环境验收</h3><p>Windows 运行单测，成功加载 checkpoint 并完成 5 个回合。</p></div>
+      <div class="panel"><span class="index">B · PENDING</span><h3>实验复现</h3><p>干净基线一致性检查，预设种子下测试所有噪声分组。</p></div>
+      <div class="panel"><span class="index">C · PENDING</span><h3>结果解释</h3><p>比较 EMA 收益和损失，分析失败类型、统计不确定性及边界。</p></div>
+      <div class="panel"><span class="index">D · PARTIAL</span><h3>真实 Demo</h3><p>云端实际 MuJoCo 对照 GIF 与结果图已完成；Windows 本机演示和公开部署未完成。</p></div>
+    </div>
+    <div class="actions"><a class="btn btn-primary" href="https://github.com/ELIMS-ECHO/mujoco-robustness-portfolio/actions">查看开发记录 / Draft PR ↗</a><a class="btn" href="https://huggingface.co/hhmm1122/fetch-pickandplace-sac-her">查看上游项目 ↗</a></div>
+  </div></section>
+</main>
+<div class="container"><footer><span>© ELIMS-ECHO · Robotics engineering portfolio · WIP</span><span>本页面不包含虚构实验指标。已明确区分个人工作与上游成果。</span></footer></div>
+<script>
+(function(){
+  "use strict";
+  let current = null;
+  // Verified 35-episode GitHub Actions pilot. Only a smoke test, not final evidence.
+  const measuredEval30 = {"status":"measured_on_local_environment","environment":"FetchPickAndPlace-v4","model_sha256":"1aad52960bc0b7baaa5249f3aa1a2de09009c300dd2b0bf61c9c51d7467b017b","episodes_per_condition":30,"seed_start":10000,"provenance":"./evidence/summary.json","summary":[{"method":"clean","sigma_m":0,"episodes":30,"ever_success_count":30,"final_success_count":30,"ever_success_rate":1,"final_success_rate":1,"ever_success_95pct_wilson":[0.8864866068301441,1],"final_success_95pct_wilson":[0.8864866068301441,1]},{"method":"noisy","sigma_m":0.005,"episodes":30,"ever_success_count":30,"final_success_count":30,"ever_success_rate":1,"final_success_rate":1,"ever_success_95pct_wilson":[0.8864866068301441,1],"final_success_95pct_wilson":[0.8864866068301441,1]},{"method":"ema","sigma_m":0.005,"episodes":30,"ever_success_count":27,"final_success_count":25,"ever_success_rate":0.9,"final_success_rate":0.8333333333333334,"ever_success_95pct_wilson":[0.7437891742121487,0.9654001112519663],"final_success_95pct_wilson":[0.6643564949397841,0.9266345762803118]},{"method":"noisy","sigma_m":0.01,"episodes":30,"ever_success_count":30,"final_success_count":28,"ever_success_rate":1,"final_success_rate":0.9333333333333333,"ever_success_95pct_wilson":[0.8864866068301441,1],"final_success_95pct_wilson":[0.7867654163778273,0.9815229762082975]},{"method":"ema","sigma_m":0.01,"episodes":30,"ever_success_count":29,"final_success_count":23,"ever_success_rate":0.9666666666666667,"final_success_rate":0.7666666666666667,"ever_success_95pct_wilson":[0.8332960900899163,0.994091409618218],"final_success_95pct_wilson":[0.5907167384226281,0.8820761185534486]},{"method":"noisy","sigma_m":0.02,"episodes":30,"ever_success_count":24,"final_success_count":10,"ever_success_rate":0.8,"final_success_rate":0.3333333333333333,"ever_success_95pct_wilson":[0.6269430358724208,0.9049489282256657],"final_success_95pct_wilson":[0.19230498083901404,0.5121994835509378]},{"method":"ema","sigma_m":0.02,"episodes":30,"ever_success_count":26,"final_success_count":23,"ever_success_rate":0.8666666666666667,"final_success_rate":0.7666666666666667,"ever_success_95pct_wilson":[0.7031867331836102,0.9469034451584953],"final_success_95pct_wilson":[0.5907167384226281,0.8820761185534486]}]};
+  const $ = id => document.getElementById(id);
+  const fmt = n => Number.isFinite(n) ? (n*100).toFixed(1)+"%" : "—";
+  const escaped = s => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const label = s => s === "clean" ? "Clean" : s === "noisy" ? "Noisy" : s === "ema" ? "EMA" : s;
+  function render(){
+    if(!current) return;
+    const rows = current.summary;
+    const key = $("metric").value;
+    const clean = rows.find(r => r.method==="clean");
+    const noisy = rows.filter(r => r.method==="noisy").sort((a,b)=>Number(b.sigma_m)-Number(a.sigma_m))[0];
+    const ema = noisy && rows.find(r => r.method==="ema" && Number(r.sigma_m)===Number(noisy.sigma_m));
+    $("mClean").textContent = clean ? fmt(clean[key]) : "—";
+    $("mNoise").textContent = noisy ? fmt(noisy[key]) : "—";
+    $("mSigma").textContent = noisy ? "噪声标准差 "+Math.round(noisy.sigma_m*1000)+" mm" : "—";
+    $("mDelta").textContent = ema && noisy ? ((ema[key]-noisy[key])*100>0?"+":"")+((ema[key]-noisy[key])*100).toFixed(1)+" pp" : "—";
+    $("bars").replaceChildren();
+    $("tbody").replaceChildren();
+    for(const r of rows) {
+      const value=Number(r[key]); const percentage=fmt(value);
+      const name=label(r.method)+" · "+Math.round(Number(r.sigma_m)*1000)+" mm";
+      const row=document.createElement("div");row.className="chartrow";
+      const nameEl=document.createElement("div");nameEl.className="chartlabel";nameEl.textContent=name;
+      const track=document.createElement("div");track.className="bartrack";
+      const bar=document.createElement("div");bar.className="bar "+(r.method==="noisy"?"noisy":r.method==="ema"?"ema":"");
+      bar.style.width=Math.max(0,Math.min(100,value*100))+"%";track.append(bar);
+      const valEl=document.createElement("div");valEl.className="chartval";valEl.textContent=percentage;
+      row.append(nameEl,track,valEl);$("bars").append(row);
+      const tr=document.createElement("tr");
+      const ciKey=key==="final_success_rate"?"final_success_95pct_wilson":"ever_success_95pct_wilson";
+      const interval=Array.isArray(r[ciKey])?r[ciKey].map(fmt).join(" – "):"—";
+      for (const value of [label(r.method),Math.round(r.sigma_m*1000)+" mm",String(r.episodes),percentage,interval]){
+        const td=document.createElement("td");td.textContent=value;tr.append(td);
+      }
+      $("tbody").append(tr);
+    }
+    $("metadata").textContent="数据来源："+(current.provenance?"已核验 Actions 记录 "+current.provenance:"用户本地导入，待独立核验")+" · 环境："+(current.environment||"未记录")+" · 模型 SHA-256："+(current.model_sha256||"未记录")+" · 每条件回合数："+(current.episodes_per_condition||"未知")+"。EMA 在20mm表现更好，但在低噪声下更差；本实验不代表跨策略泛化。";
+  }
+  current=measuredEval30;
+  $("empty").classList.add("hidden");
+  $("data").classList.remove("hidden");
+  render();
+  $("metric").addEventListener("change",render);
+  $("file").addEventListener("change",async e=>{
+    const file=e.target.files[0];if(!file) return;
+    $("error").textContent="";
+    try{
+      const obj=JSON.parse(await file.text());
+      if(obj.status!=="measured_on_local_environment") throw new Error("文件未标记为真实环境测量数据；拒绝将模拟数据作为实验结果");
+      if(!/^[0-9a-f]{64}$/i.test(String(obj.model_sha256||""))) throw new Error("缺少合法模型 SHA-256；请使用正式评估脚本输出");
+      if(!Number.isInteger(obj.episodes_per_condition)||obj.episodes_per_condition<1) throw new Error("缺少评估回合数");
+      if(!Array.isArray(obj.summary)||!obj.summary.length||obj.summary.some(x=>!["clean","noisy","ema"].includes(x.method)||!Number.isFinite(Number(x.ever_success_rate))||!Number.isFinite(Number(x.final_success_rate))||!Number.isFinite(Number(x.sigma_m)))) throw new Error("JSON 不是本项目生成的有效 summary.json");
+      if(obj.summary.some(x=>Number(x.ever_success_rate)<0||Number(x.ever_success_rate)>1||Number(x.final_success_rate)<0||Number(x.final_success_rate)>1)) throw new Error("成功率必须在 0 到 1 之间");
+      current=obj;$("empty").classList.add("hidden");$("data").classList.remove("hidden");render();
+    }catch(error){$("error").textContent="导入失败："+error.message}
+  });
+})();
+</script>
+</body></html>
