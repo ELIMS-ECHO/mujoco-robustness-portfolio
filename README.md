@@ -44,7 +44,9 @@
 
 ## 工程架构图
 
-![MuJoCo 机械臂鲁棒性评估工程架构图](./assets/system-architecture.svg)
+![MuJoCo 机械臂鲁棒性评估工程架构图](./assets/system-architecture.png)
+
+可缩放矢量源文件：[assets/system-architecture.svg](./assets/system-architecture.svg)。
 
 图中按实际代码模块展示实验配置、MuJoCo 环境、观测处理、三种对照条件、固定策略、闭环执行、轨迹诊断与证据输出。三种条件共用同一固定 SAC+HER 预训练策略。
 
