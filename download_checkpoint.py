@@ -1,7 +1,7 @@
-"""Download and pin an externally trained SAC checkpoint from Hugging Face.
+"""从 Hugging Face 下载并固定第三方训练的 SAC 模型检查点。
 
-Does not train or redistribute the checkpoint in this repository.
-Always record the exact remote revision and local SHA-256 for provenance.
+本脚本不会训练模型，也不会在本仓库中重新分发第三方权重。
+必须记录准确的上游版本标识和本地 SHA-256，以便追溯模型来源。
 """
 from __future__ import annotations
 
@@ -30,13 +30,13 @@ def main() -> None:
 
     from huggingface_hub import hf_hub_download
 
-    # Use the immutable revision that was evaluated and recorded in the evidence.
-    # Override only when deliberately testing a different upstream checkpoint.
+    # 使用已经完成评估并记录在证据文件中的不可变版本。
+    # 只有在明确测试另一个上游模型版本时，才覆盖此参数。
     parser.add_argument("--revision", default=DEFAULT_REVISION)
     args = parser.parse_args()
     remote_sha = args.revision
     if not remote_sha or len(remote_sha) != 40:
-        raise ValueError("revision must be a full 40-character Hugging Face commit SHA")
+        raise ValueError("revision 必须是完整的 40 位 Hugging Face commit SHA")
     args.output_dir.mkdir(parents=True, exist_ok=True)
     checkpoint = Path(hf_hub_download(
         repo_id=REPO_ID,
@@ -47,7 +47,7 @@ def main() -> None:
     checkpoint_sha = sha256(checkpoint)
     if remote_sha == DEFAULT_REVISION and checkpoint_sha != EXPECTED_SHA256:
         raise RuntimeError(
-            "Downloaded checkpoint hash does not match the verified portfolio baseline: "
+            "下载的模型权重哈希与已核验的作品集基线不一致："
             f"expected {EXPECTED_SHA256}, got {checkpoint_sha}"
         )
     manifest = {
@@ -57,7 +57,7 @@ def main() -> None:
         "checkpoint_sha256": checkpoint_sha,
         "checkpoint_path": str(checkpoint.resolve()),
         "source": "https://huggingface.co/" + REPO_ID,
-        "license_note": "Check upstream terms; no redistribution or license claim is made here.",
+        "license_note": "请核实上游授权条款；本仓库不声明模型权重许可，也不重新分发模型权重。",
     }
     dest = args.output_dir / "model_provenance.json"
     dest.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
