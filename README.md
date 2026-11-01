@@ -108,7 +108,7 @@ flowchart LR
 - NumPy 2.3.5
 - Hugging Face Hub、Matplotlib、ImageIO 与 Pillow（用于模型下载、绘图和 GIF 录制）
 
-### Windows / PowerShell
+### Windows 下的 PowerShell 运行方法
 
 在项目目录中执行：
 
