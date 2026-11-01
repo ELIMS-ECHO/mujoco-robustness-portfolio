@@ -230,7 +230,7 @@
     <div class="stepslist">
       <div class="panel"><span class="index">A · 部分完成</span><h3>云端环境验收</h3><p>GitHub Linux 环境已成功加载固定模型并完成真实 MuJoCo 评估；Windows 本机运行仍待验收。</p></div>
       <div class="panel"><span class="index">B · 已完成</span><h3>独立实验</h3><p>已完成 30 个环境随机种子、7 组条件、共 210 回合对照，并归档逐回合数据。</p></div>
-      <div class="panel"><span class="index">C · 诊断已完成</span><h3>轨迹诊断与机制分析</h3><p>已完成逐步轨迹诊断：位置 RMSE、方向滞后投影、动作差异与物块—目标距离。初步观察到 EMA 的噪声抑制与响应滞后权衡；因果机制尚未通过独立干预实验确认。</p></div>
+      <div class="panel"><span class="index">C · 诊断已完成</span><h3>轨迹诊断与机制分析</h3><p>已完成逐步轨迹诊断（RMSE、方向滞后投影、动作差异与目标距离）。在 20 mm 噪声下，EMA 降低了物块与相对位置输入误差，但增大了夹爪位置误差；方向滞后投影约为 15–30 mm。因果机制仍待独立干预实验验证。</p></div>
       <div class="panel"><span class="index">D · 部分完成</span><h3>仿真演示与网站</h3><p>云端 MuJoCo 对照 GIF 已生成并公开；Windows 本机演示与 GitHub Pages 部署尚未完成。</p></div>
     </div>
     <div class="actions"><a class="btn btn-primary" href="https://github.com/ELIMS-ECHO/mujoco-robustness-portfolio/actions">查看自动化运行记录 ↗</a><a class="btn" href="https://huggingface.co/hhmm1122/fetch-pickandplace-sac-her">查看上游模型项目 ↗</a></div>
