@@ -18,7 +18,7 @@
     .body{font-size:18px;fill:#c3d2da}
     .small{font-size:15px;fill:#9eb3be}
     .label{font-size:13px;font-weight:800;letter-spacing:1px;fill:#071a20}
-    .file{font-size:15px;fill:#8fe6d0;font-family:Consolas,"Courier New",monospace}
+    .file{font-size:15px;fill:#8fe6d0;font-family:"Noto Sans CJK SC",Consolas,"Courier New",monospace}
     .io{font-size:15px;fill:#d1dee4}
     .branchTitle{font-size:22px;font-weight:800;fill:#f2f7f8}
     .branchBody{font-size:16px;fill:#c1d1d9}
