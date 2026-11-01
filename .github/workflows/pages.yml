@@ -40,6 +40,8 @@ jobs:
           cp index.html _site/index.html
           cp assets/demo.gif _site/assets/demo.gif
           cp assets/final-success-rate.svg _site/assets/final-success-rate.svg
+          cp assets/system-architecture.png _site/assets/system-architecture.png
+          cp assets/system-architecture.svg _site/assets/system-architecture.svg
           cp evidence/trajectory-diagnostics/position_error_comparison.png _site/assets/position_error_comparison.png
           cp evidence/trajectory-diagnostics/goal_distance_20mm.png _site/assets/goal_distance_20mm.png
 
