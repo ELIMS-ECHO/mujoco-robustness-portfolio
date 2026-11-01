@@ -109,7 +109,7 @@ python .\record_demo.py --model .\upstream-model\best_model.zip --seed 10001 --n
 - **真实云端实验：** 35 回合预实验与 210 回合独立评估均已完成；模型来源、CSV/JSON 和图表已留存。Windows 本机视频和跨模型泛化仍未验证。
 - **仿真演示：** 公开仓库已成功运行真实 MuJoCo GIF 生成工作流，并将 GIF、逐案例 JSON 和模型来源记录提交到仓库。
 
-## Windows / PowerShell 运行方法
+## Windows 下的 PowerShell 运行方法
 
 以下操作需要在你自己的 Windows 电脑上执行。代码已经提交，不代表本机已经完成运行验收。
 
