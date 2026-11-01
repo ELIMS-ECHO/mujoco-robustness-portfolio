@@ -39,7 +39,7 @@
 - Windows 本机环境下的独立运行与人工演示验收。
 - 推广到另一预训练模型、真实机器人或视觉感知任务。
 - 从零训练 SAC + HER，并建立跨训练随机种子的比较。
-- GitHub Pages 公网作品集网站部署。目前公开仓库已可访问，但独立网页尚未部署为公网网站。
+- Windows 本机演示与复现尚待独立验收；GitHub Pages 公网作品集已部署：[在线作品集](https://elims-echo.github.io/mujoco-robustness-portfolio/)。
 - 精确定位 EMA 的失败机制。目前失败类型仅为探索性启发式诊断。
 
 ## 上游作者与许可
