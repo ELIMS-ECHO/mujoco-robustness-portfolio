@@ -16,7 +16,7 @@ permissions:
 
 concurrency:
   group: ema-trajectory-diagnostics
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   diagnose:
@@ -100,18 +100,29 @@ jobs:
 
       - name: 将可追溯诊断证据归档到公开仓库
         run: |
-          mkdir -p evidence/trajectory-diagnostics
-          cp results/trajectory-diagnostics/trajectory_steps.csv.gz evidence/trajectory-diagnostics/
-          cp results/trajectory-diagnostics/episode_summary.csv evidence/trajectory-diagnostics/
-          cp results/trajectory-diagnostics/diagnostics_summary.json evidence/trajectory-diagnostics/
-          cp results/trajectory-diagnostics/diagnostics_report.md evidence/trajectory-diagnostics/
-          cp results/trajectory-diagnostics/position_error_comparison.png evidence/trajectory-diagnostics/
-          cp results/trajectory-diagnostics/goal_distance_20mm.png evidence/trajectory-diagnostics/
           git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f evidence/trajectory-diagnostics/
-          if ! git diff --cached --quiet; then
+          git config user.email "41898282+users.noreply.github.com"
+          # 先同步最新 main，再复制本次运行结果，避免并发工作流对二进制 CSV 压缩包执行 rebase 冲突。
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git reset --hard origin/main
+            mkdir -p evidence/trajectory-diagnostics
+            cp results/trajectory-diagnostics/trajectory_steps.csv.gz evidence/trajectory-diagnostics/
+            cp results/trajectory-diagnostics/episode_summary.csv evidence/trajectory-diagnostics/
+            cp results/trajectory-diagnostics/diagnostics_summary.json evidence/trajectory-diagnostics/
+            cp results/trajectory-diagnostics/diagnostics_report.md evidence/trajectory-diagnostics/
+            cp results/trajectory-diagnostics/position_error_comparison.png evidence/trajectory-diagnostics/
+            cp results/trajectory-diagnostics/goal_distance_20mm.png evidence/trajectory-diagnostics/
+            git add -f evidence/trajectory-diagnostics/
+            if git diff --cached --quiet; then
+              echo "诊断证据与 main 一致，无需新增提交。"
+              exit 0
+            fi
             git commit -m "归档 EMA 逐步轨迹诊断证据 [skip ci]"
-            git pull --rebase origin main
-            git push origin HEAD:main
-          fi
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo "检测到并发推送，重新同步后重试（第 $attempt 次）。"
+          done
+          echo "连续三次无法归档诊断证据。"
+          exit 1
