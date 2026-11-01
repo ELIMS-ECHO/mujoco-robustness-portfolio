@@ -15,7 +15,7 @@ def plot(summary_path: Path, output_path: Path) -> None:
     import matplotlib.pyplot as plt
 
     payload = json.loads(summary_path.read_text(encoding="utf-8"))
-    if payload.get("status") != "measured_on_local_environment":
+    if payload.get("status") not in ("measured_in_mujoco_simulation", "measured_on_local_environment"):
         raise ValueError("该文件不是环境实测结果")
     if len(str(payload.get("model_sha256", ""))) != 64:
         raise ValueError("缺少模型来源对应的 SHA-256")
@@ -47,7 +47,7 @@ def plot(summary_path: Path, output_path: Path) -> None:
     ax.set_xlabel("位置观测高斯噪声标准差 σ（mm）")
     ax.set_ylabel("曾达成目标比例（%）")
     ax.set_title(
-        f"FetchPickAndPlace-v4 · SAC 策略鲁棒性\\n"
+        f"FetchPickAndPlace-v4 · SAC 策略鲁棒性\n"
         f"n={payload['episodes_per_condition']} 每组条件 · 95% Wilson 置信区间"
     )
     ax.grid(alpha=0.2)
