@@ -3,7 +3,8 @@
   "filename": "best_model.zip",
   "revision": "c817f4a3033fb4bde985bfcfe93ed5d8b949b04b",
   "checkpoint_sha256": "1aad52960bc0b7baaa5249f3aa1a2de09009c300dd2b0bf61c9c51d7467b017b",
-  "checkpoint_path": "/home/runner/work/code-study/code-study/portfolio/mujoco-robustness/upstream-model/best_model.zip",
+  "checkpoint_path": "upstream-model/best_model.zip (downloaded at runtime; checkpoint not included)",
   "source": "https://huggingface.co/hhmm1122/fetch-pickandplace-sac-her",
-  "license_note": "Check upstream terms; no redistribution or license claim is made here."
+  "license_note": "Check upstream terms; no redistribution or license claim is made here.",
+  "public_archive_note": "The original CI runner path was omitted from this public copy. The immutable model revision and checkpoint SHA-256 are unchanged."
 }
