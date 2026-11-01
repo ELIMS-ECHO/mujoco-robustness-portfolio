@@ -1,5 +1,5 @@
 {
-  "label": "Selected demonstration example, not representative success rate",
+  "label": "\u4e8b\u5148\u6311\u9009\u7684\u8bf4\u660e\u6027\u6f14\u793a\u6848\u4f8b\uff0c\u4e0d\u4ee3\u8868\u603b\u4f53\u6210\u529f\u7387",
   "environment": "FetchPickAndPlace-v4",
   "model_sha256": "1aad52960bc0b7baaa5249f3aa1a2de09009c300dd2b0bf61c9c51d7467b017b",
   "seed": 10001,
