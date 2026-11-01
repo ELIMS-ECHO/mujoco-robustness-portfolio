@@ -1,7 +1,7 @@
-"""Record an actual MuJoCo comparison GIF with an externally trained SAC policy.
+"""使用第三方预训练 SAC 策略录制 MuJoCo 仿真对照 GIF。
 
-A single selected demonstration case; NOT representative of overall performance.
-Requires working MuJoCo offscreen renderer (MUJOCO_GL=osmesa or egl).
+该文件只录制一个事先选定的演示案例，不能代表整体实验表现。
+需要可用的 MuJoCo 离屏渲染器（MUJOCO_GL=osmesa 或 egl）。
 """
 from __future__ import annotations
 
@@ -25,13 +25,13 @@ def digest_file(path: Path) -> str:
 
 def one_run(model, env, render_env, seed: int, method: str, sigma: float, alpha: float,
             max_steps: int) -> tuple[list[np.ndarray], dict]:
-    """Step the headless evaluation env only; render states in an isolated copy."""
+    """只推进无画面的评估环境；将状态复制到独立的展示环境中渲染。"""
     import mujoco
 
     render_env.reset(seed=seed)
     def render_copy() -> np.ndarray:
-        # Never render or advance the measured env: rendering can disturb its
-        # numerical path or initialization, compromising episode comparability.
+        # 不要在被测环境中渲染或额外推进仿真：渲染过程可能影响
+        # 数值轨迹或初始化状态，进而破坏不同回合之间的可比性。
         src, dst = env.unwrapped.data, render_env.unwrapped.data
         dst.qpos[:] = src.qpos
         dst.qvel[:] = src.qvel
@@ -44,7 +44,7 @@ def one_run(model, env, render_env, seed: int, method: str, sigma: float, alpha:
         mujoco.mj_forward(render_env.unwrapped.model, dst)
         frame = render_env.render()
         if frame is None:
-            raise RuntimeError("MuJoCo render() produced no RGB frame")
+            raise RuntimeError("MuJoCo render() 未生成 RGB 画面")
         return np.array(frame, copy=True)
 
     obs, _ = env.reset(seed=seed)
@@ -64,7 +64,7 @@ def one_run(model, env, render_env, seed: int, method: str, sigma: float, alpha:
         obs, _, terminated, truncated, info = env.step(action)
         frames.append(render_copy())
         last_success = bool(info.get("is_success", False))
-        if last_success and first_success is None:
+        if last_success 和 first_success is None:
             first_success = step
         if terminated or truncated:
             break
@@ -90,10 +90,10 @@ def make_gif(runs: list[tuple[list[np.ndarray], dict]], out_path: Path, fps: int
             x = (500 - image.width) // 2
             canvas.paste(image, (x, 40))
             draw = ImageDraw.Draw(canvas)
-            name = "Noisy 20mm" if info["method"] == "noisy" else "EMA 20mm"
+            name = "未滤波策略 20 mm" if info["method"] == "noisy" else "EMA 策略 20 mm"
             draw.text((14, 12), f"{name} | selected seed={info['seed']}", fill=(210, 241, 230))
-            label = "FINAL SUCCESS" if info["final_success"] else "FINAL FAILURE"
-            draw.text((14, 397), f"{label} (episode outcome; not real-time)", fill=(238, 189, 126))
+            label = "终态成功" if info["final_success"] else "终态失败"
+            draw.text((14, 397), f"{label} (回合结束结果；非实时状态)", fill=(238, 189, 126))
             columns.append(np.asarray(canvas))
         result_frames.append(np.concatenate(columns, axis=1))
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -111,19 +111,19 @@ def main() -> None:
     parser.add_argument("--fps", type=int, default=12)
     parser.add_argument("--output", type=Path, default=Path("results/demo-20mm.gif"))
     parser.add_argument("--expect-contrast", action="store_true",
-                        help="Require noisy final-failure and EMA final-success for selected seed")
+                        help="要求指定随机种子下未滤波策略终态失败、EMA 策略终态成功")
     args = parser.parse_args()
     if not args.model.is_file() or args.noise_sigma <= 0 or args.max_steps < 1 or args.fps < 1:
-        parser.error("Missing model or invalid positive numeric argument")
+        parser.error("缺少模型文件或正数参数无效")
     import gymnasium as gym
     import gymnasium_robotics
     from stable_baselines3 import SAC
     from stable_baselines3.common.buffers import DictReplayBuffer
 
     gym.register_envs(gymnasium_robotics)
-    # This environment is identical to the benchmark: no rendering mode.
+    # 该环境与正式评估基准相同，不启用渲染模式。
     env = gym.make(ENV_ID, max_episode_steps=args.max_steps)
-    # Visual capture happens in a separate, never-stepped scene.
+    # 画面采集在独立的展示环境中进行，该环境不负责推进实验回合。
     render_env = gym.make(ENV_ID, render_mode="rgb_array", max_episode_steps=args.max_steps)
     try:
         model = SAC.load(str(args.model), env=env, device="cpu", custom_objects={
@@ -141,13 +141,13 @@ def main() -> None:
             no, ema_record = cases[0][1], cases[1][1]
             if no["final_success"] or not ema_record["final_success"]:
                 raise RuntimeError(
-                    "Selected seed does not match intended visible contrast: "
+                    "指定随机种子不符合预期的对照结果："
                     f"noisy final={no['final_success']}, EMA final={ema_record['final_success']}. "
                     "Do not publish this demo as an improvement example."
                 )
         make_gif(cases, args.output, args.fps)
         manifest = {
-            "label": "Selected demonstration example, not representative success rate",
+            "label": "事先挑选的说明性演示案例，不代表总体成功率",
             "environment": ENV_ID,
             "model_sha256": digest_file(args.model),
             "seed": args.seed,
@@ -158,7 +158,7 @@ def main() -> None:
         }
         manifest_path = args.output.with_suffix(".json")
         manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
-        print(f"Saved {args.output} and {manifest_path}")
+        print(f"已保存 {args.output} 和 {manifest_path}")
     finally:
         render_env.close()
         env.close()
