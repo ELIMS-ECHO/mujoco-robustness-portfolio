@@ -1,6 +1,6 @@
-"""Fast deterministic tests for observation integrity, statistics and evaluation loop.
+"""快速、确定性的测试：检查观测数据完整性、统计计算与评估流程。
 
-Uses a synthetic mock environment: its success rates are NOT MuJoCo results.
+测试使用合成模拟环境；其中的成功率**不是 MuJoCo 实验结果**。
 """
 import sys
 import unittest
@@ -44,7 +44,7 @@ class MockEnv:
     def step(self, action):
         self.step_count += 1
         obs = make_obs(z=0.42 + 0.015 * self.step_count)
-        # Synthetic success at steps 2 and 3, not a real robot result.
+        # 在第 2、3 步设置合成成功标记，不代表真实机器人结果。
         return obs, -1.0, False, self.step_count == 3, {
             "is_success": self.step_count >= 2
         }
