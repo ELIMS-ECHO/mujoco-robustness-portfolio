@@ -56,6 +56,13 @@
     .demo-visual{margin:22px 0 4px}
     .demo-visual img{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:14px;background:#071018}
     .demo-visual figcaption{margin-top:9px;color:var(--muted);font-size:12px}
+  
+    .diagnostic-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:18px}
+    .diagnostic-grid figure{margin:0;min-width:0}
+    .diagnostic-grid img{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:14px;background:#fff}
+    .diagnostic-grid figcaption{margin-top:8px;color:var(--muted);font-size:12px}
+    .diagnostic-links{display:flex;flex-wrap:wrap;gap:14px;margin-top:14px;font-size:13px}
+    @media(max-width:760px){.diagnostic-grid{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
@@ -167,6 +174,24 @@
       </div>
       <div class="panel"><h3>各条件成功率</h3><div id="bars"></div><div class="tablewrap"><table><thead><tr><th>方法</th><th>位置误差</th><th>回合数</th><th>成功率</th><th>Wilson 95% 置信区间（当前指标）</th></tr></thead><tbody id="tbody"></tbody></table></div></div>
       <div class="muted small" style="padding-top:14px" id="metadata"></div>
+    </div>
+    <div class="panel">
+      <h3>观测误差与闭环轨迹诊断</h3>
+      <p class="muted small">逐步记录夹爪、物块的真实位置、受噪声污染的位置、策略实际接收的位置与执行动作。图表用于解释 EMA 的噪声抑制和时间滞后权衡，不替代 210 回合总体评估。</p>
+      <div class="diagnostic-grid">
+        <figure>
+          <img src="./assets/position_error_comparison.png" alt="未滤波与 EMA 的夹爪、物块和相对位置估计误差对比" loading="lazy">
+          <figcaption>每回合位置 RMSE 均值与标准差；同时比较夹爪、物块及相对位置。</figcaption>
+        </figure>
+        <figure>
+          <img src="./assets/goal_distance_20mm.png" alt="20 毫米观测噪声下未滤波与 EMA 的物块到目标距离随控制步变化" loading="lazy">
+          <figcaption>20 mm 噪声条件下，物块到目标的真实距离随环境控制步变化。</figcaption>
+        </figure>
+      </div>
+      <div class="diagnostic-links">
+        <a href="https://github.com/ELIMS-ECHO/mujoco-robustness-portfolio/tree/main/evidence/trajectory-diagnostics">查看逐步轨迹证据 ↗</a>
+        <a href="https://github.com/ELIMS-ECHO/mujoco-robustness-portfolio/blob/main/evidence/trajectory-diagnostics/diagnostics_report.md">查看诊断报告 ↗</a>
+      </div>
     </div>
   </div></section>
 
