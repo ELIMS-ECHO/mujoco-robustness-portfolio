@@ -27,6 +27,6 @@ The compressed archive SHA-256 is:
 
 ## Provenance and limitations
 
-The 210 episodes were produced by a completed MuJoCo evaluation run on 2026-11-01, using one third-party SAC+HER checkpoint. The public repository preserves the original episode-level CSV bytes, aggregate summary and model provenance. The model weights are not included. The upstream model card does not clearly state a license; verify upstream terms before reuse.
+The 210 episodes were produced by a completed MuJoCo evaluation run on 2026-11-01, using one third-party SAC+HER checkpoint. The public repository preserves the original episode-level CSV bytes and aggregate summary. The model provenance manifest retains the immutable model revision and checkpoint SHA-256; the original private runner path is omitted from the public copy. The model weights are not included. The upstream model card does not clearly state a license; verify upstream terms before reuse.
 
 The 30-seed evaluation is simulation evidence for one fixed checkpoint. It does not establish cross-checkpoint generalization or real-robot performance. The heuristic failure buckets are diagnostics, not validated physical labels.
