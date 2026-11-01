@@ -1,0 +1,191 @@
+{
+  "status": "measured_on_local_environment",
+  "model_sha256": "1aad52960bc0b7baaa5249f3aa1a2de09009c300dd2b0bf61c9c51d7467b017b",
+  "model_path": "portfolio/mujoco-robustness/upstream-model/best_model.zip",
+  "hf_compatible_loading": true,
+  "environment": "FetchPickAndPlace-v4",
+  "max_steps": 50,
+  "sigmas_m": [
+    0.005,
+    0.01,
+    0.02
+  ],
+  "failure_buckets_warning": "Exploratory heuristic thresholds; not validated physical labels",
+  "dependency_versions": {
+    "python": "3.11.17",
+    "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.43",
+    "numpy": "2.3.5",
+    "gymnasium": "1.2.3",
+    "gymnasium-robotics": "1.4.2",
+    "mujoco": "3.3.7",
+    "stable-baselines3": "2.8.0",
+    "torch": "2.15.0+cpu"
+  },
+  "observation_noise": "independent Gaussian noise on gripper and object xyz, rederived relative xyz and achieved_goal",
+  "episodes_per_condition": 30,
+  "seed_start": 10000,
+  "alpha": 0.35,
+  "summary": [
+    {
+      "method": "clean",
+      "sigma_m": 0.0,
+      "episodes": 30,
+      "ever_success_count": 30,
+      "ever_success_rate": 1.0,
+      "ever_success_95pct_wilson": [
+        0.8864866068301441,
+        1.0
+      ],
+      "final_success_count": 30,
+      "final_success_rate": 1.0,
+      "final_success_95pct_wilson": [
+        0.8864866068301441,
+        1.0
+      ],
+      "mean_first_success_step_conditional": 9.733333333333333,
+      "mean_episode_return": -8.733333333333333,
+      "failure_buckets_heuristic": {
+        "success": 30
+      }
+    },
+    {
+      "method": "noisy",
+      "sigma_m": 0.005,
+      "episodes": 30,
+      "ever_success_count": 30,
+      "ever_success_rate": 1.0,
+      "ever_success_95pct_wilson": [
+        0.8864866068301441,
+        1.0
+      ],
+      "final_success_count": 30,
+      "final_success_rate": 1.0,
+      "final_success_95pct_wilson": [
+        0.8864866068301441,
+        1.0
+      ],
+      "mean_first_success_step_conditional": 10.266666666666667,
+      "mean_episode_return": -9.433333333333334,
+      "failure_buckets_heuristic": {
+        "success": 30
+      }
+    },
+    {
+      "method": "ema",
+      "sigma_m": 0.005,
+      "episodes": 30,
+      "ever_success_count": 27,
+      "ever_success_rate": 0.9,
+      "ever_success_95pct_wilson": [
+        0.7437891742121487,
+        0.9654001112519663
+      ],
+      "final_success_count": 25,
+      "final_success_rate": 0.8333333333333334,
+      "final_success_95pct_wilson": [
+        0.6643564949397841,
+        0.9266345762803118
+      ],
+      "mean_first_success_step_conditional": 19.59259259259259,
+      "mean_episode_return": -26.733333333333334,
+      "failure_buckets_heuristic": {
+        "success": 27,
+        "little_object_lift_heuristic": 2,
+        "no_success_after_lift_heuristic": 1
+      }
+    },
+    {
+      "method": "noisy",
+      "sigma_m": 0.01,
+      "episodes": 30,
+      "ever_success_count": 30,
+      "ever_success_rate": 1.0,
+      "ever_success_95pct_wilson": [
+        0.8864866068301441,
+        1.0
+      ],
+      "final_success_count": 28,
+      "final_success_rate": 0.9333333333333333,
+      "final_success_95pct_wilson": [
+        0.7867654163778273,
+        0.9815229762082975
+      ],
+      "mean_first_success_step_conditional": 12.033333333333333,
+      "mean_episode_return": -13.333333333333334,
+      "failure_buckets_heuristic": {
+        "success": 30
+      }
+    },
+    {
+      "method": "ema",
+      "sigma_m": 0.01,
+      "episodes": 30,
+      "ever_success_count": 29,
+      "ever_success_rate": 0.9666666666666667,
+      "ever_success_95pct_wilson": [
+        0.8332960900899163,
+        0.994091409618218
+      ],
+      "final_success_count": 23,
+      "final_success_rate": 0.7666666666666667,
+      "final_success_95pct_wilson": [
+        0.5907167384226281,
+        0.8820761185534486
+      ],
+      "mean_first_success_step_conditional": 20.24137931034483,
+      "mean_episode_return": -25.9,
+      "failure_buckets_heuristic": {
+        "success": 29,
+        "no_success_after_lift_heuristic": 1
+      }
+    },
+    {
+      "method": "noisy",
+      "sigma_m": 0.02,
+      "episodes": 30,
+      "ever_success_count": 24,
+      "ever_success_rate": 0.8,
+      "ever_success_95pct_wilson": [
+        0.6269430358724208,
+        0.9049489282256657
+      ],
+      "final_success_count": 10,
+      "final_success_rate": 0.3333333333333333,
+      "final_success_95pct_wilson": [
+        0.19230498083901404,
+        0.5121994835509378
+      ],
+      "mean_first_success_step_conditional": 19.125,
+      "mean_episode_return": -36.333333333333336,
+      "failure_buckets_heuristic": {
+        "no_success_after_lift_heuristic": 2,
+        "little_object_lift_heuristic": 4,
+        "success": 24
+      }
+    },
+    {
+      "method": "ema",
+      "sigma_m": 0.02,
+      "episodes": 30,
+      "ever_success_count": 26,
+      "ever_success_rate": 0.8666666666666667,
+      "ever_success_95pct_wilson": [
+        0.7031867331836102,
+        0.9469034451584953
+      ],
+      "final_success_count": 23,
+      "final_success_rate": 0.7666666666666667,
+      "final_success_95pct_wilson": [
+        0.5907167384226281,
+        0.8820761185534486
+      ],
+      "mean_first_success_step_conditional": 20.115384615384617,
+      "mean_episode_return": -28.633333333333333,
+      "failure_buckets_heuristic": {
+        "little_object_lift_heuristic": 2,
+        "success": 26,
+        "no_success_after_lift_heuristic": 2
+      }
+    }
+  ]
+}
