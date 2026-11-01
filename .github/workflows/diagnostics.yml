@@ -10,17 +10,6 @@ on:
       - "download_checkpoint.py"
       - "requirements.txt"
   workflow_dispatch:
-    inputs:
-      episodes:
-        description: "每个条件使用的环境随机种子数量"
-        required: true
-        default: "30"
-        type: string
-      seed_start:
-        description: "起始环境随机种子"
-        required: true
-        default: "10000"
-        type: string
 
 permissions:
   contents: write
@@ -59,8 +48,8 @@ jobs:
         run: |
           python diagnose_trajectories.py \
             --model upstream-model/best_model.zip \
-            --episodes "\${{ inputs.episodes || '30' }}" \
-            --seed-start "\${{ inputs.seed_start || '10000' }}" \
+            --episodes 30 \
+            --seed-start 10000 \
             --output results/trajectory-diagnostics
 
       - name: 检查轨迹数据与诊断报告
