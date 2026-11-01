@@ -48,7 +48,7 @@ def main() -> None:
     if remote_sha == DEFAULT_REVISION and checkpoint_sha != EXPECTED_SHA256:
         raise RuntimeError(
             "下载的模型权重哈希与已核验的作品集基线不一致："
-            f"expected {EXPECTED_SHA256}, got {checkpoint_sha}"
+            f"期望值为 {EXPECTED_SHA256}，实际值为 {checkpoint_sha}"
         )
     manifest = {
         "model_id": REPO_ID,
