@@ -74,7 +74,7 @@ The standalone HTML dashboard source is [`index.html`](./index.html). Download i
 
 The exact per-episode records and aggregate JSON used for the 30-seed report are committed in this repository:
 
-- [`evidence/episodes.csv`](./evidence/episodes.csv) — all 210 measured episodes.
+- [`evidence/episodes.csv`](./evidence/episodes.csv.gz) — all 210 measured episodes.
 - [`evidence/summary.json`](./evidence/summary.json) — seven condition-level summaries and confidence intervals.
 - [`evidence/model_provenance.json`](./evidence/model_provenance.json) — upstream checkpoint revision and SHA-256.
 - [`evidence/README.md`](./evidence/README.md) — evidence origin, definitions and integrity notes.
@@ -147,7 +147,8 @@ mujoco-robustness/
 │   ├── demo.json
 │   └── model_provenance.json
 ├── evidence/
-│   ├── episodes.csv
+│   ├── episodes.csv.gz
+│   ├── summary.csv
 │   ├── summary.json
 │   └── model_provenance.json
 ├── .github/workflows/
