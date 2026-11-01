@@ -176,12 +176,17 @@ def run_diagnostics(model, env, episode_count: int, seed_start: int,
                 )
 
                 action, _ = model.predict(policy_obs, deterministic=True)
-                action = np.asarray(action, dtype=np.float64).reshape(-1)
-                if action.size != 4:
-                    raise ValueError(f"策略动作维度应为 4，实际为 {action.size}")
-                actions[(sigma, seed, step, method)] = action.copy()
+                # 保留策略原始动作 dtype（通常为 float32）传给环境，避免诊断脚本
+                # 与主评估器因 float32/float64 转换产生不同的接触动力学轨迹。
+                action_native = np.asarray(action)
+                action_flat = action_native.reshape(-1)
+                if action_flat.size != 4:
+                    raise ValueError(f"策略动作维度应为 4，实际为 {action_flat.size}")
+                actions[(sigma, seed, step, method)] = action_flat.astype(
+                    np.float64, copy=True
+                )
 
-                next_obs, reward, terminated, truncated, info = env.step(action)
+                next_obs, reward, terminated, truncated, info = env.step(action_native)
                 post_state = np.asarray(next_obs["observation"], dtype=np.float64)
                 post_gripper = post_state[0:3].copy()
                 post_object = post_state[3:6].copy()
