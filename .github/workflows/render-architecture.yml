@@ -1,0 +1,54 @@
+name: Render architecture diagram PNG
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "assets/system-architecture.svg"
+      - ".github/workflows/render-architecture.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install SVG renderer
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcairo2
+          python -m pip install --upgrade pip
+          python -m pip install cairosvg
+
+      - name: Render SVG to PNG
+        run: |
+          python - <<'PY'
+          import cairosvg
+          cairosvg.svg2png(
+              url="assets/system-architecture.svg",
+              write_to="assets/system-architecture.png",
+              output_width=1600,
+          )
+          PY
+
+      - name: Commit generated PNG
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/system-architecture.png
+          if git diff --cached --quiet; then
+            echo "PNG 已是最新版本。"
+            exit 0
+          fi
+          git commit -m "build: render engineering architecture diagram PNG"
+          git push origin HEAD:main
