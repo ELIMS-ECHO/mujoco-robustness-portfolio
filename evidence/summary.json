@@ -1,7 +1,7 @@
 {
-  "status": "measured_on_local_environment",
+  "status": "measured_in_mujoco_simulation",
   "model_sha256": "1aad52960bc0b7baaa5249f3aa1a2de09009c300dd2b0bf61c9c51d7467b017b",
-  "model_path": "portfolio/mujoco-robustness/upstream-model/best_model.zip",
+  "model_path": "upstream-model/best_model.zip (downloaded at runtime; not stored in repository)",
   "hf_compatible_loading": true,
   "environment": "FetchPickAndPlace-v4",
   "max_steps": 50,
@@ -187,5 +187,6 @@
         "no_success_after_lift_heuristic": 2
       }
     }
-  ]
+  ],
+  "execution_context": "GitHub Actions Linux runner; MuJoCo simulation"
 }
