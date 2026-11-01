@@ -170,7 +170,7 @@ def evaluate(model, env, episode_count: int, seed_start: int, sigmas: list[float
                     min_gripper_distance, max_rise, first_success is not None
                 ),
             })
-        print(f"已完成方法={method} sigma={sigma:g}，回合数={episode_count}")
+        print(f"已完成方法={method}，噪声标准差={sigma:g}，回合数={episode_count}")
     return records
 
 
