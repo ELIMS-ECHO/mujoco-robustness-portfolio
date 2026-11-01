@@ -149,7 +149,7 @@ def evaluate(model, env, episode_count: int, seed_start: int, sigmas: list[float
                     float(np.linalg.norm(obs["achieved_goal"] - obs["desired_goal"]))
                 )
                 last_success = bool(info.get("is_success", False))
-                if last_success 和 first_success is None:
+                if last_success and first_success is None:
                     first_success = steps
                 if terminated or truncated:
                     break
