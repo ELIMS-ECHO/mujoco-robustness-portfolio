@@ -56,6 +56,10 @@
     .demo-visual{margin:22px 0 4px}
     .demo-visual img{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:14px;background:#071018}
     .demo-visual figcaption{margin-top:9px;color:var(--muted);font-size:12px}
+    .architecture-visual{margin:24px 0 4px;padding:14px;background:#0b1721;border:1px solid var(--line);border-radius:18px;overflow:hidden}
+    .architecture-visual img{display:block;width:100%;height:auto;max-height:none;border-radius:10px}
+    .architecture-visual figcaption{margin-top:12px;color:var(--muted);font-size:12px}
+    .architecture-visual figcaption a{color:var(--mint);text-decoration:underline;text-underline-offset:3px}
   
     .diagnostic-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:18px}
     .diagnostic-grid figure{margin:0;min-width:0}
@@ -141,15 +145,12 @@
 
   <section id="architecture"><div class="container">
     <div class="eyebrow">02 / 方法与系统</div>
-    <h2>从可控扰动到可解释的实验结果。</h2>
-    <p class="section-intro">原始仿真物理状态不变。只对传入策略的观测加入随机误差，保持原模型、初始种子和评估口径一致，再进行对照。</p>
-    <div class="pipeline">
-      <div class="step"><span class="index">01</span><strong>MuJoCo</strong><span>FetchPickAndPlace-v4 环境</span></div>
-      <div class="step"><span class="index">02</span><strong>观测信息</strong><span>末端、物块、相对位置</span></div>
-      <div class="step"><span class="index">03</span><strong>干预方法</strong><span>高斯噪声 / EMA 滤波</span></div>
-      <div class="step"><span class="index">04</span><strong>SAC 策略</strong><span>固定的开源预训练策略</span></div>
-      <div class="step"><span class="index">05</span><strong>评估</strong><span>成功率 / 步数 / 回报 / CSV</span></div>
-    </div>
+    <h2>从实验配置到闭环执行与证据归档。</h2>
+    <p class="section-intro">下图按仓库中的实际代码模块展示输入输出关系。三种观测条件分别运行同一固定策略；MuJoCo 负责真实物理状态推进，评估模块负责记录与分析，不将观测干预误写成物理环境扰动。</p>
+    <figure class="architecture-visual">
+      <img src="./assets/system-architecture.png" alt="MuJoCo 机械臂鲁棒性评估工程架构图，展示实验配置、MuJoCo 环境、状态观测、三种对照条件、固定 SAC 加 HER 策略、动作执行、闭环反馈、轨迹诊断和证据输出" loading="lazy">
+      <figcaption>工程模块与数据流：三种观测条件共用同一固定 SAC+HER 策略；动作执行后由 MuJoCo 返回下一步状态，形成闭环。<a href="./assets/system-architecture.svg">查看可缩放矢量源图</a></figcaption>
+    </figure>
     <div class="method" style="margin-top:24px">
       <div class="panel"><span class="tag">基线</span><h3>无噪声基线</h3><p>无额外观测误差的原始环境，作为复现基线。</p><code>σ = 0 mm</code></div>
       <div class="panel"><span class="tag">噪声扰动</span><h3>未滤波观测</h3><p>分别对末端与物块 XYZ 注入独立高斯误差，避免坐标泄漏。</p><code>σ ∈ {5, 10, 20} mm</code></div>
@@ -229,7 +230,7 @@
     <div class="stepslist">
       <div class="panel"><span class="index">A · 部分完成</span><h3>云端环境验收</h3><p>GitHub Linux 环境已成功加载固定模型并完成真实 MuJoCo 评估；Windows 本机运行仍待验收。</p></div>
       <div class="panel"><span class="index">B · 已完成</span><h3>独立实验</h3><p>已完成 30 个环境随机种子、7 组条件、共 210 回合对照，并归档逐回合数据。</p></div>
-      <div class="panel"><span class="index">C · 部分完成</span><h3>结果分析</h3><p>已报告 EMA 在不同噪声水平下的收益与损失，并完成配对统计；失败机理仍待轨迹分析验证。</p></div>
+      <div class="panel"><span class="index">C · 诊断已完成</span><h3>轨迹诊断与机制分析</h3><p>已完成逐步轨迹诊断：位置 RMSE、方向滞后投影、动作差异与物块—目标距离。初步观察到 EMA 的噪声抑制与响应滞后权衡；因果机制尚未通过独立干预实验确认。</p></div>
       <div class="panel"><span class="index">D · 部分完成</span><h3>仿真演示与网站</h3><p>云端 MuJoCo 对照 GIF 已生成并公开；Windows 本机演示与 GitHub Pages 部署尚未完成。</p></div>
     </div>
     <div class="actions"><a class="btn btn-primary" href="https://github.com/ELIMS-ECHO/mujoco-robustness-portfolio/actions">查看自动化运行记录 ↗</a><a class="btn" href="https://huggingface.co/hhmm1122/fetch-pickandplace-sac-her">查看上游模型项目 ↗</a></div>
