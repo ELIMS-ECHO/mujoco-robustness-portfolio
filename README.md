@@ -2,6 +2,8 @@
 
 **A reproducible MuJoCo evaluation study of how Gaussian position-observation noise and exponential moving-average (EMA) filtering affect a pretrained FetchPickAndPlace policy.**
 
+[![Portfolio CI](https://github.com/ELIMS-ECHO/mujoco-robustness-portfolio/actions/workflows/tests.yml/badge.svg)](https://github.com/ELIMS-ECHO/mujoco-robustness-portfolio/actions/workflows/tests.yml) [![Demo workflow](https://github.com/ELIMS-ECHO/mujoco-robustness-portfolio/actions/workflows/demo.yml/badge.svg)](https://github.com/ELIMS-ECHO/mujoco-robustness-portfolio/actions/workflows/demo.yml)
+
 [Experiment report](./EVAL30_REPORT_2026-11-01.md) · [Demo validation](./DEMO_REPORT_2026-11-01.md) · [Resume case study](./RESUME_CASE_STUDY.md) · [Technical notes](./TECHNICAL_NOTES.md)
 
 > **Scope and ownership.** This project does not train a new SAC+HER policy. It evaluates one third-party pretrained checkpoint and contributes the observation-noise injection, EMA comparison, paired-seed evaluation, diagnostics, plotting, reproducibility workflow and analysis. All results below are MuJoCo simulation results, not real-robot results.
