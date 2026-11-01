@@ -1,4 +1,4 @@
-# Python 3.11; install CPU PyTorch separately as described in README.md
+# Python 3.11；CPU 版 PyTorch 请按照 README.md 中的说明单独安装。
 numpy==2.3.5
 gymnasium==1.2.3
 gymnasium-robotics==1.4.2
