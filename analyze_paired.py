@@ -87,8 +87,8 @@ def main() -> None:
     print(args.output)
     for x in final["results"]:
         print(f"噪声标准差={x['sigma_m']:.3f}，配对样本数={x['paired_seeds']}, "
-              f"EMA-noisy={x['ema_minus_noisy_percentage_points']:+.1f} 个百分点，"
-              f"exact p={x['two_sided_exact_mcnemar_p_exploratory']:.6g}")
+              f"EMA 相对未滤波差值={x['ema_minus_noisy_percentage_points']:+.1f} 个百分点，"
+              f"精确 p 值={x['two_sided_exact_mcnemar_p_exploratory']:.6g}")
 
 
 if __name__ == "__main__":
