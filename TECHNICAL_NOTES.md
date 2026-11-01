@@ -22,7 +22,7 @@
 
 ## 核心成果：独立30种子验证（2026-11-01）
 
-**当前作品集采用的主要结果**：[GitHub Actions 成功运行 #41253970185](https://github.com/ELIMS-ECHO/mujoco-robustness-portfolio/tree/main/evidence) — 7组条件 × 每组30个环境种子，**210回合真实 MuJoCo 仿真**。随机种子10000–10029，与下方35回合预实验完全独立。完整方法、统计与限制见 [30种子实验报告](./EVAL30_REPORT_2026-11-01.md)；可在 Action 的 artifact 下载逐回合 `episodes.csv`、`summary.json`、`success_rate_comparison.png`、`model_provenance.json`。
+**当前作品集采用的主要结果**：[公开原始证据包](./evidence/README.md) — 7组条件 × 每组30个环境种子，**210回合真实 MuJoCo 仿真**。随机种子10000–10029，与下方35回合预实验完全独立。完整方法、统计与限制见 [30种子实验报告](./EVAL30_REPORT_2026-11-01.md)；可直接检查本仓库归档的 `episodes.csv.gz`、`summary.json`、`summary.csv` 和 `model_provenance.json`。
 
 | 位置观测噪声 | 原策略 ever / final | 原策略 + EMA ever / final |
 | --- | --- | --- |
@@ -39,9 +39,9 @@
 
 ## 真实 MuJoCo GIF 演示（已通过云端验收）
 
-[GitHub Actions 成功运行 #41254522706](https://github.com/ELIMS-ECHO/mujoco-robustness-portfolio/blob/main/assets/demo.gif) 产出左右对比的真实机械臂 GIF：**同一随机种子10001、20mm位置噪声、50步/方法**，未滤波策略最终失败；EMA策略最终成功，第37步首次到达目标。
+[公开仓库的 demo workflow](./.github/workflows/demo.yml) 生成并归档左右对比的真实 MuJoCo 仿真 GIF：**同一随机种子10001、20mm位置噪声、50步/方法**，未滤波策略最终失败；EMA策略最终成功，第37步首次到达目标。
 
-下载该运行的 artifact `mujoco-real-selected-seed-demo-gif`（含原始 GIF、每条轨迹的 outcome JSON 和模型 provenance），详见 [演示与渲染一致性报告](./DEMO_REPORT_2026-11-01.md)。
+GIF、每条轨迹的 outcome JSON 和模型 provenance 已归档在 `assets/`，详见 [演示与渲染一致性报告](./DEMO_REPORT_2026-11-01.md)。
 
 **重要：** 这是事后挑选的一个有反差的案例，不是随机代表性样本。首次录制发现直接在仿真环境 render 导致结果与批量评估不一致，已修复为独立渲染环境，并由 `--expect-contrast` 校验后重新录制。作品集正式性能数据仅使用独立210回合实验。
 
@@ -55,7 +55,7 @@ python .\record_demo.py --model .\upstream-model\best_model.zip --seed 10001 --n
 
 ## 第一批真实实验结果（2026-11-01，预实验）
 
-[GitHub Actions 成功运行 #41253772723](https://github.com/ELIMS-ECHO/code-study/actions/runs/41253772723) 已完成 **7 个条件 × 各 5 个环境种子，共 35 个真实仿真回合**（seed 2026–2030）。所有方法均使用同一固定模型、同一初始种子列表、确定性预测、每回合最多 50 步。
+35回合预实验曾由 GitHub Actions 实际完成；其原始 artifact 未纳入本公开证据包。汇总见 [预实验报告](./PILOT_REPORT_2026-11-01.md)。已完成 **7 个条件 × 各 5 个环境种子，共 35 个真实仿真回合**（seed 2026–2030）。所有方法均使用同一固定模型、同一初始种子列表、确定性预测、每回合最多 50 步。
 
 | 观测噪声标准差 | 原策略 ever / final | EMA ever / final |
 | --- | --- | --- |
@@ -112,7 +112,7 @@ python .\record_demo.py --model .\upstream-model\best_model.zip --seed 10001 --n
 **一键入口**（在已激活的 Python 3.11 环境执行）：
 
 ```powershell
-cd D:\CODEX\code-study\portfolio\mujoco-robustness
+cd D:\CODEX\mujoco-robustness-portfolio
 .\RUN_WINDOWS.ps1 -InstallDependencies -Episodes 5
 # 5回合通过后，再跑正式对照
 .\RUN_WINDOWS.ps1 -Episodes 100
@@ -127,13 +127,13 @@ cd D:\CODEX\code-study\portfolio\mujoco-robustness
 ```powershell
 cd D:\CODEX
 
-# 取得我已提交的实验实现（仓库是私有的，需要你的 GitHub 权限）
-git clone --branch feat/mujoco-robustness-portfolio https://github.com/ELIMS-ECHO/code-study.git
+# 取得我已提交的实验实现（公开作品集仓库，无需私有仓库权限）
+git clone https://github.com/ELIMS-ECHO/mujoco-robustness-portfolio.git
 
 conda create -n mujoco-portfolio python=3.11 -y
 conda activate mujoco-portfolio
 
-cd .\code-study\portfolio\mujoco-robustness
+cd .\mujoco-robustness-portfolio
 
 # 先只做少量真实评估；自动下载并固定 Hugging Face 模型 revision
 .\RUN_WINDOWS.ps1 -InstallDependencies -Episodes 5
@@ -168,7 +168,7 @@ cd .\code-study\portfolio\mujoco-robustness
 ## 项目结构
 
 ```text
-portfolio/mujoco-robustness/
+mujoco-robustness-portfolio/
 ├── README.md                  # 项目主页、来源声明、复现步骤
 ├── index.html                 # 响应式作品集网页（导入真实 JSON）
 ├── RUN_WINDOWS.ps1            # Windows 一键安装（可选）、单测、评估
