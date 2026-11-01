@@ -64,7 +64,7 @@ def one_run(model, env, render_env, seed: int, method: str, sigma: float, alpha:
         obs, _, terminated, truncated, info = env.step(action)
         frames.append(render_copy())
         last_success = bool(info.get("is_success", False))
-        if last_success 和 first_success is None:
+        if last_success and first_success is None:
             first_success = step
         if terminated or truncated:
             break
