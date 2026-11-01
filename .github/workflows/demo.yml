@@ -45,6 +45,9 @@ jobs:
             --output assets/demo.gif
       - name: 将模型来源记录保存到演示文件旁
         run: cp upstream-model/model_provenance.json assets/model_provenance.json
+      - name: 清理模型来源文件中的运行器绝对路径
+        run: |
+          python -c "import json,pathlib; p=pathlib.Path('assets/model_provenance.json'); d=json.loads(p.read_text(encoding='utf-8')); d['checkpoint_path']='upstream-model/best_model.zip（运行时下载；模型权重不包含在仓库中）'; d['license_note']='请核实上游授权条款；本仓库不声明模型权重许可，也不重新分发模型权重。'; p.write_text(json.dumps(d,ensure_ascii=False,indent=2)+'\\n',encoding='utf-8')"
       - name: 上传生成的演示文件作为工作流构建产物
         uses: actions/upload-artifact@v4
         with:
