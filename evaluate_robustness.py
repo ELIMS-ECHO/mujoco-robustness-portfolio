@@ -1,7 +1,6 @@
-"""Evaluate a pretrained FetchPickAndPlace SAC policy under position-observation noise.
+"""评估预训练 FetchPickAndPlace SAC 策略在位置观测噪声下的表现。
 
-No training is performed. This file is independent evaluation code, not a copy
-of the upstream SAC/HER training implementation.
+本程序不执行模型训练。这是独立编写的评估代码，不是上游 SAC/HER 训练实现的复制版本。
 """
 from __future__ import annotations
 
@@ -24,23 +23,23 @@ DEFAULT_MAX_STEPS = 50
 def _consistent_state(obs: dict) -> None:
     state = obs["observation"]
     if state.shape != (25,) or obs["achieved_goal"].shape != (3,) or obs["desired_goal"].shape != (3,):
-        raise ValueError("Expected FetchPickAndPlace-v4 Dict observation, 25/3/3 dimensions")
+        raise ValueError("FetchPickAndPlace-v4 的 Dict 观测维度应为 25/3/3")
     state[6:9] = state[3:6] - state[0:3]
     obs["achieved_goal"] = np.array(state[3:6], copy=True)
 
 
 def corrupt_position_observation(observation: dict, sigma: float, rng: np.random.Generator) -> dict:
-    """Corrupt observed gripper/object positions in meters, preserving consistency.
+    """对观测到的夹爪与物块位置（单位：米）加入噪声，同时保持字段一致。
 
-    FetchPickAndPlace observation[0:3]: gripper position
-                           [3:6]: object position
-                           [6:9]: object - gripper
-    achieved_goal is the object position and MUST be corrupted as well to
-    avoid leaking clean object coordinates into a goal-conditioned policy.
-    desired_goal remains the commanded target.
+    FetchPickAndPlace observation[0:3]：夹爪位置
+                           [3:6]：物块位置
+                           [6:9]：物块位置减去夹爪位置
+    achieved_goal 表示物块位置，也必须同步加入噪声，避免目标条件策略
+    通过未受扰动的物块坐标获得信息。
+    desired_goal 保持为环境指定的目标位置。
     """
     if sigma < 0 or not np.isfinite(sigma):
-        raise ValueError("sigma must be a finite nonnegative number")
+        raise ValueError("sigma 必须是有限的非负数")
     result = {key: np.array(value, copy=True) for key, value in observation.items()}
     _consistent_state(result)
     if sigma == 0:
@@ -53,11 +52,11 @@ def corrupt_position_observation(observation: dict, sigma: float, rng: np.random
 
 
 class PositionEMA:
-    """Exponential moving average over measured gripper and object positions."""
+    """对测得的夹爪与物块位置计算指数移动平均。"""
 
     def __init__(self, alpha: float):
         if not np.isfinite(alpha) or not 0.0 < alpha <= 1.0:
-            raise ValueError("alpha must be in (0, 1]")
+            raise ValueError("alpha 必须位于区间 (0, 1] 内")
         self.alpha = alpha
         self._previous: np.ndarray | None = None
 
@@ -80,9 +79,9 @@ class PositionEMA:
 
 
 def wilson_interval(successes: int, count: int, z: float = 1.9599639845) -> list[float]:
-    """Approximate 95% binomial interval; episodes are treated as independent."""
+    """近似计算二项比例的 95% 置信区间；计算时将各回合视为相互独立。"""
     if count <= 0 or successes < 0 or successes > count:
-        raise ValueError("Expected 0 <= successes <= count and count > 0")
+        raise ValueError("必须满足 0 <= successes <= count 且 count > 0")
     p = successes / count
     denom = 1.0 + z * z / count
     center = (p + z * z / (2 * count)) / denom
@@ -92,16 +91,16 @@ def wilson_interval(successes: int, count: int, z: float = 1.9599639845) -> list
 
 def conditions(sigmas: list[float]) -> list[tuple[str, float]]:
     if not sigmas or any(s <= 0 or not np.isfinite(s) for s in sigmas):
-        raise ValueError("All noise sigmas must be finite and greater than zero")
+        raise ValueError("所有噪声标准差都必须是有限正数")
     if len(set(sigmas)) != len(sigmas):
-        raise ValueError("Noise sigma values must be distinct")
+        raise ValueError("噪声标准差不能重复")
     return [("clean", 0.0)] + [
         (method, sigma) for sigma in sigmas for method in ("noisy", "ema")
     ]
 
 
 def failure_bucket(min_gripper_distance: float, max_object_rise: float, ever_success: bool) -> str:
-    """Exploratory diagnostic heuristic, NOT a validated grasp-failure label."""
+    """探索性诊断启发式规则，并非经过验证的抓取失败标签。"""
     if ever_success:
         return "success"
     if min_gripper_distance > 0.08:
@@ -114,7 +113,7 @@ def failure_bucket(min_gripper_distance: float, max_object_rise: float, ever_suc
 def evaluate(model, env, episode_count: int, seed_start: int, sigmas: list[float],
              alpha: float, max_steps: int = DEFAULT_MAX_STEPS) -> list[dict]:
     if episode_count < 1 or seed_start < 0 or max_steps < 1:
-        raise ValueError("episode_count and max_steps must be positive, seed_start nonnegative")
+        raise ValueError("episode_count 和 max_steps 必须为正数，seed_start 不能为负数")
     records: list[dict] = []
     for method, sigma in conditions(sigmas):
         for index in range(episode_count):
@@ -150,7 +149,7 @@ def evaluate(model, env, episode_count: int, seed_start: int, sigmas: list[float
                     float(np.linalg.norm(obs["achieved_goal"] - obs["desired_goal"]))
                 )
                 last_success = bool(info.get("is_success", False))
-                if last_success and first_success is None:
+                if last_success 和 first_success is None:
                     first_success = steps
                 if terminated or truncated:
                     break
@@ -171,7 +170,7 @@ def evaluate(model, env, episode_count: int, seed_start: int, sigmas: list[float
                     min_gripper_distance, max_rise, first_success is not None
                 ),
             })
-        print(f"Completed method={method} sigma={sigma:g} episodes={episode_count}")
+        print(f"已完成方法={method} sigma={sigma:g}，回合数={episode_count}")
     return records
 
 
@@ -229,26 +228,26 @@ def dependency_versions() -> dict[str, str]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--model", required=True, type=Path, help="Existing SAC .zip checkpoint")
-    parser.add_argument("--episodes", type=int, default=20, help="Number of paired evaluation seeds")
+    parser.add_argument("--model", required=True, type=Path, help="已有的 SAC .zip 模型检查点")
+    parser.add_argument("--episodes", type=int, default=20, help="配对评估使用的随机种子数量")
     parser.add_argument("--seed-start", type=int, default=2026)
     parser.add_argument("--sigmas", nargs="+", type=float, default=[0.005, 0.01, 0.02],
-                        help="Position noise standard deviations in meters")
-    parser.add_argument("--alpha", type=float, default=0.35, help="EMA smoothing coefficient")
+                        help="位置噪声标准差，单位为米")
+    parser.add_argument("--alpha", type=float, default=0.35, help="EMA 平滑系数")
     parser.add_argument(
         "--hf-compatible", action="store_true",
-        help="Use DictReplayBuffer compatibility overrides for the Hugging Face model card"
+        help="按照 Hugging Face 模型卡建议，使用 DictReplayBuffer 兼容加载参数"
     )
     parser.add_argument("--max-steps", type=int, default=DEFAULT_MAX_STEPS)
     parser.add_argument("--output", type=Path, default=Path("results"))
     args = parser.parse_args()
 
     if not args.model.is_file():
-        parser.error(f"Model file not found: {args.model}")
+        parser.error(f"未找到模型文件：{args.model}")
     if args.episodes < 1 or args.seed_start < 0 or args.max_steps < 1:
-        parser.error("episodes must be positive and seed-start must be nonnegative")
+        parser.error("episodes 必须为正数，seed-start 不能为负数")
     if not np.isfinite(args.alpha) or not 0 < args.alpha <= 1:
-        parser.error("alpha must lie in (0, 1]")
+        parser.error("alpha 必须位于区间 (0, 1] 内")
     try:
         conditions(args.sigmas)
     except ValueError as error:
@@ -264,8 +263,8 @@ def main() -> None:
         load_kwargs = {}
         if args.hf_compatible:
             from stable_baselines3.common.buffers import DictReplayBuffer
-            # Inference-only load compatibility recommended in the model card.
-            # The trained policy weights remain unchanged.
+            # 按照模型卡建议，仅为推理加载设置兼容参数。
+            # 预训练策略权重保持不变。
             load_kwargs["custom_objects"] = {
                 "replay_buffer_class": DictReplayBuffer,
                 "replay_buffer_kwargs": {},
@@ -291,9 +290,9 @@ def main() -> None:
         "environment": ENV_ID,
         "max_steps": args.max_steps,
         "sigmas_m": args.sigmas,
-        "failure_buckets_warning": "Exploratory heuristic thresholds; not validated physical labels",
+        "failure_buckets_warning": "探索性启发式阈值；不是经过验证的物理标签",
         "dependency_versions": dependency_versions(),
-        "observation_noise": "independent Gaussian noise on gripper and object xyz, rederived relative xyz and achieved_goal",
+        "observation_noise": "分别对夹爪与物块 XYZ 位置观测加入独立高斯噪声，并重新计算相对 XYZ 与 achieved_goal",
         "episodes_per_condition": args.episodes,
         "seed_start": args.seed_start,
         "alpha": args.alpha,
@@ -302,7 +301,7 @@ def main() -> None:
     (args.output / "summary.json").write_text(
         json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
-    print(f"Wrote {args.output / 'episodes.csv'} and {args.output / 'summary.json'}")
+    print(f"已写入 {args.output / 'episodes.csv'} 和 {args.output / 'summary.json'}")
 
 
 if __name__ == "__main__":
