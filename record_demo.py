@@ -91,7 +91,7 @@ def make_gif(runs: list[tuple[list[np.ndarray], dict]], out_path: Path, fps: int
             canvas.paste(image, (x, 40))
             draw = ImageDraw.Draw(canvas)
             name = "未滤波策略 20 mm" if info["method"] == "noisy" else "EMA 策略 20 mm"
-            draw.text((14, 12), f"{name} | selected seed={info['seed']}", fill=(210, 241, 230))
+            draw.text((14, 12), f"{name} | 随机种子={info['seed']}", fill=(210, 241, 230))
             label = "终态成功" if info["final_success"] else "终态失败"
             draw.text((14, 397), f"{label} (回合结束结果；非实时状态)", fill=(238, 189, 126))
             columns.append(np.asarray(canvas))
