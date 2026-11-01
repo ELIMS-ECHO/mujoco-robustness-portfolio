@@ -11,7 +11,7 @@
   <marker id="arrow" markerWidth="12" markerHeight="12" refX="9" refY="6" orient="auto"><path d="M1 1 L10 6 L1 11" fill="none" stroke="#80dcca" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
   <marker id="arrowBlue" markerWidth="12" markerHeight="12" refX="9" refY="6" orient="auto"><path d="M1 1 L10 6 L1 11" fill="none" stroke="#78aef0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
   <style>
-    text{font-family:"Noto Sans SC","Microsoft YaHei","PingFang SC",Arial,sans-serif}
+    text{font-family:"Noto Sans CJK SC","Noto Sans SC","Microsoft YaHei","PingFang SC",Arial,sans-serif}
     .title{font-size:42px;font-weight:800;fill:#f0f7f7;letter-spacing:1px}
     .subtitle{font-size:20px;fill:#a8bdc8}
     .section{font-size:27px;font-weight:800;fill:#f0f7f7}
