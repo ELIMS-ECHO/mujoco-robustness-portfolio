@@ -74,12 +74,12 @@ The standalone HTML dashboard source is [`index.html`](./index.html). Download i
 
 The exact per-episode records and aggregate JSON used for the 30-seed report are committed in this repository:
 
-- [`evidence/episodes.csv`](./evidence/episodes.csv.gz) — all 210 measured episodes.
+- [`evidence/episodes.csv.gz`](./evidence/episodes.csv.gz) — all 210 measured episodes.
 - [`evidence/summary.json`](./evidence/summary.json) — seven condition-level summaries and confidence intervals.
 - [`evidence/model_provenance.json`](./evidence/model_provenance.json) — upstream checkpoint revision and SHA-256.
 - [`evidence/README.md`](./evidence/README.md) — evidence origin, definitions and integrity notes.
 
-The public [Actions page](https://github.com/ELIMS-ECHO/mujoco-robustness-portfolio/actions) contains this repository's CI and future reproducibility runs.
+The public [Actions page](https://github.com/ELIMS-ECHO/mujoco-robustness-portfolio/actions) contains CI and reproducibility runs. Use [`.github/workflows/evaluate.yml`](./.github/workflows/evaluate.yml) to manually rerun the 30-seed evaluation; it takes substantially longer than the unit-test workflow.
 
 ## My contribution vs. upstream work
 
