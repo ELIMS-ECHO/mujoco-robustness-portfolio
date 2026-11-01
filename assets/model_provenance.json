@@ -3,7 +3,7 @@
   "filename": "best_model.zip",
   "revision": "c817f4a3033fb4bde985bfcfe93ed5d8b949b04b",
   "checkpoint_sha256": "1aad52960bc0b7baaa5249f3aa1a2de09009c300dd2b0bf61c9c51d7467b017b",
-  "checkpoint_path": "/home/runner/work/mujoco-robustness-portfolio/mujoco-robustness-portfolio/upstream-model/best_model.zip",
+  "checkpoint_path": "upstream-model/best_model.zip（运行时下载；模型权重不包含在仓库中）",
   "source": "https://huggingface.co/hhmm1122/fetch-pickandplace-sac-her",
-  "license_note": "Check upstream terms; no redistribution or license claim is made here."
+  "license_note": "请核实上游项目的授权条款；本仓库不声明模型权重许可，也不重新分发模型权重。"
 }
