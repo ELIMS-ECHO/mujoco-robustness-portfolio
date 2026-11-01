@@ -20,10 +20,9 @@ import numpy as np
 
 from evaluate_robustness import (
     ENV_ID,
-    PositionEMA,
     conditions,
-    corrupt_position_observation,
     dependency_versions,
+    evaluate,
 )
 
 TRACE_FIELDS = [
@@ -115,163 +114,122 @@ def _position_fields(prefix: str, xyz: np.ndarray) -> dict[str, float]:
 
 def run_diagnostics(model, env, episode_count: int, seed_start: int,
                     sigmas: list[float], alpha: float, max_steps: int):
-    """Run clean/noisy/EMA conditions and retain each environment step."""
+    """Use the primary evaluator's exact loop and attach a read-only trace callback."""
     trace_rows: list[dict] = []
-    episode_rows: list[dict] = []
+    previous_positions: dict[tuple[str, float, int], tuple[np.ndarray, np.ndarray]] = {}
     actions: dict[tuple[float, int, int, str], np.ndarray] = {}
-    seeds = list(range(seed_start, seed_start + episode_count))
 
-    for method, sigma in conditions(sigmas):
-        for seed in seeds:
-            obs, _ = env.reset(seed=seed)
-            rng = np.random.default_rng(seed * 1009 + 17)
-            ema = PositionEMA(alpha)
-            initial_object_z = float(obs["observation"][5])
+    def collect_step(event: dict) -> None:
+        method = str(event["method"])
+        sigma = float(event["sigma_m"])
+        seed = int(event["seed"])
+        step = int(event["step"])
+        true_pre = np.asarray(event["true_pre"], dtype=np.float64)
+        noisy_pre = np.asarray(event["noisy_pre"], dtype=np.float64)
+        policy_pre = np.asarray(event["policy_pre"], dtype=np.float64)
+        previous = previous_positions.get((method, sigma, seed))
+        previous_gripper = None if previous is None else previous[0]
+        previous_object = None if previous is None else previous[1]
 
-            gripper_raw_errors: list[float] = []
-            gripper_policy_errors: list[float] = []
-            object_raw_errors: list[float] = []
-            object_policy_errors: list[float] = []
-            gripper_lag_projections: list[float] = []
-            object_lag_projections: list[float] = []
-            goal_distances: list[float] = []
+        gripper_lag = directional_lag_projection(
+            true_pre[0:3], policy_pre[0:3], previous_gripper
+        )
+        object_lag = directional_lag_projection(
+            true_pre[3:6], policy_pre[3:6], previous_object
+        )
 
-            previous_gripper_true = None
-            previous_object_true = None
-            first_success = None
-            last_success = False
-            episode_return = 0.0
-            final_goal_distance = math.nan
-            steps = 0
+        action = np.asarray(event["action"])
+        action_flat = action.reshape(-1)
+        if action_flat.size != 4:
+            raise ValueError(f"策略动作维度应为 4，实际为 {action_flat.size}")
+        actions[(sigma, seed, step, method)] = action_flat.astype(np.float64, copy=True)
 
-            for step in range(1, max_steps + 1):
-                true_pre = np.asarray(obs["observation"][0:6], dtype=np.float64).copy()
+        post_state = np.asarray(event["post_observation"], dtype=np.float64)
+        post_gripper = post_state[0:3].copy()
+        post_object = post_state[3:6].copy()
+        goal_distance = float(
+            np.linalg.norm(event["post_achieved_goal"] - event["post_desired_goal"])
+        )
+        gripper_object_distance = float(np.linalg.norm(post_state[6:9]))
+        object_z_rise = float(post_object[2] - float(event["initial_object_z"]))
 
-                if method == "clean":
-                    noisy_obs = {key: np.array(value, copy=True) for key, value in obs.items()}
-                else:
-                    noisy_obs = corrupt_position_observation(obs, sigma, rng)
+        row = {
+            "method": method,
+            "sigma_m": sigma,
+            "seed": seed,
+            "step": step,
+            **_position_fields("gripper_true", true_pre[0:3]),
+            **_position_fields("object_true", true_pre[3:6]),
+            **_position_fields("gripper_noisy", noisy_pre[0:3]),
+            **_position_fields("object_noisy", noisy_pre[3:6]),
+            **_position_fields("gripper_policy", policy_pre[0:3]),
+            **_position_fields("object_policy", policy_pre[3:6]),
+            "gripper_raw_error_m": float(np.linalg.norm(noisy_pre[0:3] - true_pre[0:3])),
+            "object_raw_error_m": float(np.linalg.norm(noisy_pre[3:6] - true_pre[3:6])),
+            "gripper_policy_error_m": float(np.linalg.norm(policy_pre[0:3] - true_pre[0:3])),
+            "object_policy_error_m": float(np.linalg.norm(policy_pre[3:6] - true_pre[3:6])),
+            "gripper_lag_projection_m": "" if gripper_lag is None else gripper_lag,
+            "object_lag_projection_m": "" if object_lag is None else object_lag,
+            "action_dx": float(action_flat[0]),
+            "action_dy": float(action_flat[1]),
+            "action_dz": float(action_flat[2]),
+            "action_gripper": float(action_flat[3]),
+            **_position_fields("post_gripper", post_gripper),
+            **_position_fields("post_object", post_object),
+            "object_goal_distance_m": goal_distance,
+            "gripper_object_distance_m": gripper_object_distance,
+            "object_z_rise_m": object_z_rise,
+            "reward": float(event["reward"]),
+            "is_success": int(bool(event["is_success"])),
+        }
+        trace_rows.append(row)
+        previous_positions[(method, sigma, seed)] = (
+            true_pre[0:3].copy(), true_pre[3:6].copy()
+        )
 
-                noisy_pre = np.asarray(
-                    noisy_obs["observation"][0:6], dtype=np.float64
-                ).copy()
-                if method == "ema":
-                    policy_obs = ema.transform(noisy_obs)
-                else:
-                    policy_obs = noisy_obs
-                policy_pre = np.asarray(
-                    policy_obs["observation"][0:6], dtype=np.float64
-                ).copy()
+    # 关键：不在诊断脚本里复制一套 env.step 循环。
+    # 由主评估器执行同一份策略推理、噪声注入和环境推进逻辑；
+    # callback 只读取每一步的副本，不改变被测环境或 action dtype。
+    records = evaluate(
+        model, env, episode_count, seed_start, sigmas, alpha, max_steps,
+        trace_callback=collect_step,
+    )
 
-                gripper_raw_error = float(np.linalg.norm(noisy_pre[0:3] - true_pre[0:3]))
-                object_raw_error = float(np.linalg.norm(noisy_pre[3:6] - true_pre[3:6]))
-                gripper_policy_error = float(np.linalg.norm(policy_pre[0:3] - true_pre[0:3]))
-                object_policy_error = float(np.linalg.norm(policy_pre[3:6] - true_pre[3:6]))
+    traces_by_episode: dict[tuple[str, float, int], list[dict]] = defaultdict(list)
+    for row in trace_rows:
+        traces_by_episode[(row["method"], float(row["sigma_m"]), int(row["seed"]))].append(row)
 
-                gripper_lag = directional_lag_projection(
-                    true_pre[0:3], policy_pre[0:3], previous_gripper_true
-                )
-                object_lag = directional_lag_projection(
-                    true_pre[3:6], policy_pre[3:6], previous_object_true
-                )
-
-                action, _ = model.predict(policy_obs, deterministic=True)
-                # 保留策略原始动作 dtype（通常为 float32）传给环境，避免诊断脚本
-                # 与主评估器因 float32/float64 转换产生不同的接触动力学轨迹。
-                action_native = np.asarray(action)
-                action_flat = action_native.reshape(-1)
-                if action_flat.size != 4:
-                    raise ValueError(f"策略动作维度应为 4，实际为 {action_flat.size}")
-                actions[(sigma, seed, step, method)] = action_flat.astype(
-                    np.float64, copy=True
-                )
-
-                next_obs, reward, terminated, truncated, info = env.step(action_native)
-                post_state = np.asarray(next_obs["observation"], dtype=np.float64)
-                post_gripper = post_state[0:3].copy()
-                post_object = post_state[3:6].copy()
-                goal_distance = float(
-                    np.linalg.norm(next_obs["achieved_goal"] - next_obs["desired_goal"])
-                )
-                gripper_object_distance = float(np.linalg.norm(post_state[6:9]))
-                object_z_rise = float(post_object[2] - initial_object_z)
-                last_success = bool(info.get("is_success", False))
-                if last_success and first_success is None:
-                    first_success = step
-
-                row = {
-                    "method": method,
-                    "sigma_m": sigma,
-                    "seed": seed,
-                    "step": step,
-                    **_position_fields("gripper_true", true_pre[0:3]),
-                    **_position_fields("object_true", true_pre[3:6]),
-                    **_position_fields("gripper_noisy", noisy_pre[0:3]),
-                    **_position_fields("object_noisy", noisy_pre[3:6]),
-                    **_position_fields("gripper_policy", policy_pre[0:3]),
-                    **_position_fields("object_policy", policy_pre[3:6]),
-                    "gripper_raw_error_m": gripper_raw_error,
-                    "object_raw_error_m": object_raw_error,
-                    "gripper_policy_error_m": gripper_policy_error,
-                    "object_policy_error_m": object_policy_error,
-                    "gripper_lag_projection_m": "" if gripper_lag is None else gripper_lag,
-                    "object_lag_projection_m": "" if object_lag is None else object_lag,
-                    "action_dx": float(action[0]),
-                    "action_dy": float(action[1]),
-                    "action_dz": float(action[2]),
-                    "action_gripper": float(action[3]),
-                    **_position_fields("post_gripper", post_gripper),
-                    **_position_fields("post_object", post_object),
-                    "object_goal_distance_m": goal_distance,
-                    "gripper_object_distance_m": gripper_object_distance,
-                    "object_z_rise_m": object_z_rise,
-                    "reward": float(reward),
-                    "is_success": int(last_success),
-                }
-                trace_rows.append(row)
-
-                gripper_raw_errors.append(gripper_raw_error)
-                gripper_policy_errors.append(gripper_policy_error)
-                object_raw_errors.append(object_raw_error)
-                object_policy_errors.append(object_policy_error)
-                if gripper_lag is not None:
-                    gripper_lag_projections.append(gripper_lag)
-                if object_lag is not None:
-                    object_lag_projections.append(object_lag)
-                goal_distances.append(goal_distance)
-
-                previous_gripper_true = true_pre[0:3].copy()
-                previous_object_true = true_pre[3:6].copy()
-                episode_return += float(reward)
-                final_goal_distance = goal_distance
-                steps = step
-                obs = next_obs
-                if terminated or truncated:
-                    break
-
-            episode_rows.append({
-                "method": method,
-                "sigma_m": sigma,
-                "seed": seed,
-                "episode_steps": steps,
-                "ever_success": int(first_success is not None),
-                "final_success": int(last_success),
-                "first_success_step": "" if first_success is None else first_success,
-                "episode_return": episode_return,
-                "gripper_raw_rmse_m": _rms(gripper_raw_errors),
-                "gripper_policy_rmse_m": _rms(gripper_policy_errors),
-                "object_raw_rmse_m": _rms(object_raw_errors),
-                "object_policy_rmse_m": _rms(object_policy_errors),
-                "gripper_lag_projection_mean_m": _mean_or_none(gripper_lag_projections),
-                "object_lag_projection_mean_m": _mean_or_none(object_lag_projections),
-                "mean_object_goal_distance_m": _mean_or_none(goal_distances),
-                "final_object_goal_distance_m": (
-                    None if math.isnan(final_goal_distance) else final_goal_distance
-                ),
-            })
-        print(f"轨迹诊断完成：method={method}, sigma={sigma:.3f} m, episodes={episode_count}")
+    episode_rows = []
+    for record in records:
+        key = (record["method"], float(record["sigma_m"]), int(record["seed"]))
+        rows = traces_by_episode[key]
+        gripper_raw = [float(row["gripper_raw_error_m"]) for row in rows]
+        gripper_policy = [float(row["gripper_policy_error_m"]) for row in rows]
+        object_raw = [float(row["object_raw_error_m"]) for row in rows]
+        object_policy = [float(row["object_policy_error_m"]) for row in rows]
+        gripper_lag = [
+            float(row["gripper_lag_projection_m"])
+            for row in rows if row["gripper_lag_projection_m"] != ""
+        ]
+        object_lag = [
+            float(row["object_lag_projection_m"])
+            for row in rows if row["object_lag_projection_m"] != ""
+        ]
+        goal_distances = [float(row["object_goal_distance_m"]) for row in rows]
+        episode_rows.append({
+            **record,
+            "gripper_raw_rmse_m": _rms(gripper_raw),
+            "gripper_policy_rmse_m": _rms(gripper_policy),
+            "object_raw_rmse_m": _rms(object_raw),
+            "object_policy_rmse_m": _rms(object_policy),
+            "gripper_lag_projection_mean_m": _mean_or_none(gripper_lag),
+            "object_lag_projection_mean_m": _mean_or_none(object_lag),
+            "mean_object_goal_distance_m": _mean_or_none(goal_distances),
+            "final_object_goal_distance_m": goal_distances[-1] if goal_distances else None,
+        })
 
     action_divergence: dict[float, list[float]] = defaultdict(list)
+    seeds = range(seed_start, seed_start + episode_count)
     for sigma in sigmas:
         for seed in seeds:
             for step in range(1, max_steps + 1):
@@ -340,7 +298,6 @@ def run_diagnostics(model, env, episode_count: int, seed_start: int,
         step_curves.append(curve)
 
     return episode_rows, summaries, step_curves, trace_rows
-
 
 def write_report(path: Path, payload: dict) -> None:
     lines = [
@@ -517,6 +474,7 @@ def main() -> None:
         "trajectory_rows": len(trace_rows),
         "noise_scope": "独立高斯噪声仅注入夹爪与物块 XYZ 位置；速度等其他观测字段保持仿真环境原值",
         "lag_metric": "真实位置减策略输入位置，沿最近真实位移方向投影；正值表示估计位置落后于运动方向",
+        "evaluation_loop": "复用 evaluate_robustness.evaluate 的同一环境推进循环；轨迹回调只读状态副本，动作原始 dtype 不变",
         "summary": summaries,
         "step_curves": step_curves,
     }
