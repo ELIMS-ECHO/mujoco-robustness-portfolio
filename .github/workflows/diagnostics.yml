@@ -101,7 +101,7 @@ jobs:
       - name: 将可追溯诊断证据归档到公开仓库
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "41898282+users.noreply.github.com"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # 先同步最新 main，再复制本次运行结果，避免并发工作流对二进制 CSV 压缩包执行 rebase 冲突。
           for attempt in 1 2 3; do
             git fetch origin main
