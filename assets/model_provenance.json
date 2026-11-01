@@ -1,0 +1,9 @@
+{
+  "model_id": "hhmm1122/fetch-pickandplace-sac-her",
+  "filename": "best_model.zip",
+  "revision": "c817f4a3033fb4bde985bfcfe93ed5d8b949b04b",
+  "checkpoint_sha256": "1aad52960bc0b7baaa5249f3aa1a2de09009c300dd2b0bf61c9c51d7467b017b",
+  "checkpoint_path": "/home/runner/work/mujoco-robustness-portfolio/mujoco-robustness-portfolio/upstream-model/best_model.zip",
+  "source": "https://huggingface.co/hhmm1122/fetch-pickandplace-sac-her",
+  "license_note": "Check upstream terms; no redistribution or license claim is made here."
+}
