@@ -43,14 +43,7 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
 
-            python - <<'PY'
-            import cairosvg
-            cairosvg.svg2png(
-                url="assets/system-architecture.svg",
-                write_to="assets/system-architecture.png",
-                output_width=1600,
-            )
-            PY
+            python -c 'import cairosvg; cairosvg.svg2png(url="assets/system-architecture.svg", write_to="assets/system-architecture.png", output_width=1600)'
 
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
