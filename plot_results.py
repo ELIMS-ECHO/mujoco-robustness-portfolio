@@ -30,7 +30,7 @@ def plot(summary_path: Path, output_path: Path) -> None:
     fig, ax = plt.subplots(figsize=(8.5, 4.7), constrained_layout=True)
     clean_rate = float(clean["ever_success_rate"])
     ax.axhline(clean_rate * 100, linestyle="--", linewidth=1.5,
-               label=f"Clean baseline: {clean_rate:.1%}")
+               label=f"无噪声基线： {clean_rate:.1%}")
     for method, title in (("noisy", "未滤波策略"), ("ema", "噪声观测 + EMA 滤波")):
         found = {float(r["sigma_m"]): r for r in rows if r["method"] == method}
         missing = [s for s in sigmas if s not in found]
