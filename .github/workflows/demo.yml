@@ -1,4 +1,4 @@
-name: Generate MuJoCo demonstration
+name: 生成 MuJoCo 机械臂仿真演示
 
 on:
   push:
@@ -26,35 +26,35 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Install OSMesa renderer
+      - name: 安装 OSMesa 离屏渲染组件
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y libosmesa6 libgl1-mesa-dri libgl1
-      - name: Install CPU PyTorch and project dependencies
+      - name: 安装 CPU 版 PyTorch 与项目依赖
         run: |
           python -m pip install --upgrade pip
           python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
           python -m pip install -r requirements.txt
-      - name: Download the pinned third-party checkpoint and verify SHA-256
+      - name: 下载固定版本的第三方模型并核验 SHA-256
         run: python download_checkpoint.py --output-dir upstream-model
-      - name: Record the selected-seed comparison in an isolated render environment
+      - name: 在独立渲染环境中录制指定随机种子对照演示
         run: |
           python record_demo.py \
             --model upstream-model/best_model.zip \
             --seed 10001 --noise-sigma 0.02 --expect-contrast \
             --output assets/demo.gif
-      - name: Preserve model provenance beside the demo
+      - name: 将模型来源记录保存到演示文件旁
         run: cp upstream-model/model_provenance.json assets/model_provenance.json
-      - name: Upload generated demo as a workflow artifact
+      - name: 上传生成的演示文件作为工作流构建产物
         uses: actions/upload-artifact@v4
         with:
-          name: mujoco-selected-seed-demo
+          name: 机械臂指定随机种子仿真演示
           path: |
             assets/demo.gif
             assets/demo.json
             assets/model_provenance.json
           retention-days: 30
-      - name: Commit the verified demo to the public portfolio
+      - name: 将核验通过的演示文件提交到公开作品集
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
