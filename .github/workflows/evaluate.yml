@@ -19,6 +19,7 @@ permissions:
 
 jobs:
   evaluation:
+    name: 复现完整实验评估
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
