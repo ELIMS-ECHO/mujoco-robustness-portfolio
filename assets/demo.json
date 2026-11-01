@@ -1,5 +1,5 @@
 {
-  "label": "Selected demonstration example, not representative success rate",
+  "label": "事先挑选的说明性演示案例，不代表总体成功率",
   "environment": "FetchPickAndPlace-v4",
   "model_sha256": "1aad52960bc0b7baaa5249f3aa1a2de09009c300dd2b0bf61c9c51d7467b017b",
   "seed": 10001,
