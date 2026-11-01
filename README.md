@@ -76,7 +76,8 @@ The standalone HTML dashboard source is [`index.html`](./index.html). Download i
 
 The exact per-episode records and aggregate JSON used for the 30-seed report are committed in this repository:
 
-- [`evidence/episodes.csv.gz`](./evidence/episodes.csv.gz) — all 210 measured episodes.
+- [`evidence/summary.csv`](./evidence/summary.csv) — compact, GitHub-previewable seven-condition summary.
+- [`evidence/episodes.csv.gz`](./evidence/episodes.csv.gz) — all 210 original measured episodes, gzip-compressed; see [`evidence/README.md`](./evidence/README.md) to reconstruct the CSV.
 - [`evidence/summary.json`](./evidence/summary.json) — seven condition-level summaries and confidence intervals.
 - [`evidence/model_provenance.json`](./evidence/model_provenance.json) — upstream checkpoint revision and SHA-256.
 - [`evidence/README.md`](./evidence/README.md) — evidence origin, definitions and integrity notes.
