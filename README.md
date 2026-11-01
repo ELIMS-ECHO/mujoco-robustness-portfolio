@@ -104,8 +104,9 @@ flowchart LR
 - MuJoCo 3.3.7
 - Gymnasium 1.2.3 与 Gymnasium-Robotics 1.4.2
 - Stable-Baselines3 2.8.0
-- CPU 版本 PyTorch
+- CPU 版本 PyTorch（按项目说明单独安装）
 - NumPy 2.3.5
+- Hugging Face Hub、Matplotlib、ImageIO 与 Pillow（用于模型下载、绘图和 GIF 录制）
 
 ### Windows / PowerShell
 
