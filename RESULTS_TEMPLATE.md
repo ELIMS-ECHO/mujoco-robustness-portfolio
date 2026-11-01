@@ -7,7 +7,7 @@
 - Python / Gymnasium / MuJoCo / Stable-Baselines3 版本：待记录。
 - CPU/GPU 型号、操作系统：待记录。
 - 预训练模型来源：https://huggingface.co/hhmm1122/fetch-pickandplace-sac-her
-- Hugging Face 固定版本标识（不可变 commit SHA）与模型文件 SHA-256：待记录。
+- Hugging Face 固定版本标识（不可变提交 SHA）与模型文件 SHA-256：待记录。
 - 模型卡未明确显示授权许可证；仅按原作者说明的加载方式进行研究评估，不打包或重新分发权重。
 - 原始模型：[hhmm1122/fetch-pickandplace-sac-her](https://huggingface.co/hhmm1122/fetch-pickandplace-sac-her)。
 - 运行日期、完整命令、随机种子范围：待记录。
