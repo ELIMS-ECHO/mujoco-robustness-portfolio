@@ -142,8 +142,8 @@ def main() -> None:
             if no["final_success"] or not ema_record["final_success"]:
                 raise RuntimeError(
                     "指定随机种子不符合预期的对照结果："
-                    f"noisy final={no['final_success']}, EMA final={ema_record['final_success']}. "
-                    "Do not publish this demo as an improvement example."
+                    f"未滤波策略终态成功={no['final_success']}, EMA 策略终态成功={ema_record['final_success']}. "
+                    "不要将该演示作为算法改进的证据发布。"
                 )
         make_gif(cases, args.output, args.fps)
         manifest = {
